@@ -5,7 +5,8 @@
       "sitePath": "/Users/benedict/Projects/bristol-health-partners/wp",
       "baseUrl": "https://bristolhealthpartners.test",
       "adminPath": "/wp",
-      "samplesPerType": 2
+      "samplesPerType": 2,
+      "searchTerm": "health"
     }
   }
 }

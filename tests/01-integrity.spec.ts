@@ -2,9 +2,12 @@ import { test, expect } from '@playwright/test';
 import { loadMatrix } from './matrix';
 
 /**
- * Pass 01 — integrity: render each 200 route in a real browser and assert
+ * Pass 01 — integrity.
+ *
+ * Renders each 200 route in a real browser and asserts a clean runtime:
  * no JS exceptions, no console errors, no failed same-origin requests,
- * and no broken images.
+ * and no broken images. Third-party request failures are ignored — the
+ * site under trial is the subject, not its CDNs.
  */
 const matrix = loadMatrix();
 const origin = new URL(matrix.baseUrl).origin;
@@ -27,6 +30,8 @@ for (const route of matrix.routes.filter((r) => r.expect === 200)) {
 
     await page.goto(route.url, { waitUntil: 'load' });
 
+    // Lazy images below the fold never load in this pass, so only eagerly
+    // loaded, "complete" images with zero natural width count as broken.
     const brokenImages = await page.evaluate(() =>
       Array.from(document.querySelectorAll('img'))
         .filter((img) => img.loading !== 'lazy' && img.complete && img.naturalWidth === 0 && !!img.src)
