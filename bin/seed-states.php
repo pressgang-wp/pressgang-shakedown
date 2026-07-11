@@ -58,10 +58,18 @@ foreach (AcfJson::groups($acfJsonDir) as $group) {
 	$targets = AcfJson::targets($group);
 
 	if ($targets === []) {
-		continue; // options pages, menu items — not seedable as a URL (v1)
+		continue; // menu items, page_type rules — not seedable (v1)
 	}
 
 	$target = $targets[0];
+
+	// Options-page groups are global state, not a URL: seed the populated
+	// values once so chrome (header/footer) renders fully. The unseeded
+	// fresh install already exercises the empty-options state.
+	if ($target['param'] === 'options_page') {
+		(new LiveAcfAdapter())->updateFields($generator->populated((array) $group['fields']), 'option', 0);
+		continue;
+	}
 	$slugBase = sanitize_title($group['title'] ?? $group['key']);
 
 	foreach (['populated', 'minimal'] as $variant) {
