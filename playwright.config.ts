@@ -1,19 +1,37 @@
 import { defineConfig } from '@playwright/test';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Shared runner config for all shakedown passes.
  *
+ * The workspace (SHAKEDOWN_WORKSPACE, set by the CLI — falls back to this
+ * package for standalone use) owns all run artifacts: matrix, reports,
+ * traces. The derived passes live in this package; a workspace `tests/e2e/`
+ * directory, when present, runs alongside them as the journeys suite.
+ *
  * `ignoreHTTPSErrors` accommodates self-signed local TLS (.test domains);
  * traces are kept on failure so any red route can be replayed step-by-step.
  */
+const pkgRoot = dirname(fileURLToPath(import.meta.url));
+const workspace = process.env.SHAKEDOWN_WORKSPACE ?? pkgRoot;
+const journeysDir = join(workspace, 'tests/e2e');
+
 export default defineConfig({
-  testDir: './tests',
   fullyParallel: true,
   // Attached mode drives one shared PHP-FPM; a single retry absorbs load transients.
   retries: 1,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  outputDir: join(workspace, 'test-results'),
+  reporter: [['list'], ['html', { outputFolder: join(workspace, 'playwright-report'), open: 'never' }]],
   use: {
     ignoreHTTPSErrors: true,
     trace: 'retain-on-failure',
   },
+  projects: [
+    { name: 'derived', testDir: join(pkgRoot, 'tests') },
+    ...(existsSync(journeysDir) && journeysDir !== join(pkgRoot, 'tests')
+      ? [{ name: 'journeys', testDir: journeysDir }]
+      : []),
+  ],
 });

@@ -1,14 +1,27 @@
 {
   "name": "@pressgang-wp/shakedown",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Sea trials for PressGang themes — config-derived e2e smoke testing",
   "type": "module",
+  "bin": {
+    "shakedown": "bin/shakedown.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "tests",
+    "playwright.config.ts",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "matrix": "node bin/derive-matrix.mjs",
     "test": "playwright test",
     "test:ui": "playwright test --ui"
   },
-  "devDependencies": {
+  "dependencies": {
     "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.58.0"
   }

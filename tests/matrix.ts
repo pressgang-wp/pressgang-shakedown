@@ -18,14 +18,17 @@ export interface Matrix {
 }
 
 /**
- * Load the persisted matrix, with a friendly nudge when it hasn't been derived.
+ * Load the persisted matrix from the workspace (the directory the CLI was
+ * invoked from), with a friendly nudge when it hasn't been derived.
  */
 export function loadMatrix(): Matrix {
-  const path = new URL('../.shakedown/matrix.json', import.meta.url);
+  const path = process.env.SHAKEDOWN_WORKSPACE
+    ? `${process.env.SHAKEDOWN_WORKSPACE}/.shakedown/matrix.json`
+    : new URL('../.shakedown/matrix.json', import.meta.url);
   try {
     return JSON.parse(readFileSync(path, 'utf8'));
   } catch {
-    throw new Error('No matrix found. Run `npm run matrix` first.');
+    throw new Error('No matrix found. Run `shakedown matrix` (or `npm run matrix`) first.');
   }
 }
 

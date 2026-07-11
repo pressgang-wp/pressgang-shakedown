@@ -10,44 +10,40 @@ Point it at a running site and in under a minute you'll know: does every page re
 
 ## ⚡ Quick start
 
-You need Node 20+, WP-CLI, and a PressGang site running locally (any server — Herd, Valet, DDEV, MAMP… it's just a URL).
+You need Node 20+, WP-CLI, and a PressGang site running locally (any server — Herd, Valet, DDEV, MAMP… it's just a URL). From inside your theme:
 
 ```bash
-git clone https://github.com/pressgang-wp/pressgang-shakedown.git
-cd pressgang-shakedown
-npm install
-npx playwright install chromium
+npm i -D github:pressgang-wp/pressgang-shakedown
+npx playwright install chromium   # once per machine
+npx shakedown                     # ⚓ derive the matrix, run every pass
 ```
 
-Add your site as a target in `shakedown.config.json`:
+That's it. Shakedown walks up from your theme to find `wp-config.php`, asks WP-CLI for the site URL, enumerates every route, and checks them all — **no config, no specs written**.
+
+Other commands:
+
+```bash
+npx shakedown matrix          # 🗺️ just enumerate and print the routes
+npx shakedown test            # 🧪 run passes against the existing matrix
+npx shakedown ui              # Playwright's watch/UI mode
+npx playwright show-report    # browse the last run
+```
+
+Optional `shakedown.config.json` in the theme, for overrides only:
 
 ```json
 {
-  "defaultTarget": "mysite",
-  "targets": {
-    "mysite": {
-      "sitePath": "/path/to/site/wp",
-      "baseUrl": "https://mysite.test",
-      "adminPath": "",
-      "samplesPerType": 2
-    }
-  }
+  "baseUrl": "https://mysite.test",
+  "samplesPerType": 2,
+  "searchTerm": "bikes"
 }
 ```
 
-- `sitePath` — where WP-CLI can find WordPress (the directory containing `wp-config.php` / core)
-- `baseUrl` — the URL the browser should visit
-- `adminPath` — `""` normally, or `"/wp"` if core lives in a subdirectory
-- `samplesPerType` — how many example singles to test per post type
+Authored journeys (form submissions, checkout flows) live in your theme's `tests/e2e/` — when present they run alongside the derived passes as the `journeys` project.
 
-Then run the trials:
+**Introspection:** when [Capstan](https://github.com/pressgang-wp/pressgang-capstan) is installed (`wp package install pressgang-wp/pressgang-capstan`), the matrix comes from `wp capstan matrix --resolve` — including each route's expected template and controller. Without it, a bundled fallback derives the same routes minus the oracle data.
 
-```bash
-npm run matrix   # 🗺️ enumerate the site's routes → .shakedown/matrix.json
-npm test         # 🧪 run every pass against every route
-```
-
-That's it. No specs written, and your whole public surface just got checked.
+**Central mode** (many sites from one clone): a `shakedown.config.json` with a `targets` map lets one checkout drive any registered site — `npx shakedown --target=mysite`.
 
 ---
 
