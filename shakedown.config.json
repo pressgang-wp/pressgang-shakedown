@@ -1,0 +1,11 @@
+{
+  "defaultTarget": "bhp",
+  "targets": {
+    "bhp": {
+      "sitePath": "/Users/benedict/Projects/bristol-health-partners/wp",
+      "baseUrl": "https://bristolhealthpartners.test",
+      "adminPath": "/wp",
+      "samplesPerType": 2
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@pressgang-wp/shakedown",
+  "version": "0.0.1",
+  "description": "Sea trials for PressGang themes — config-derived e2e smoke testing",
+  "type": "module",
+  "scripts": {
+    "matrix": "node bin/derive-matrix.mjs",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0"
+  }
+}
