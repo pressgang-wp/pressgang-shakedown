@@ -1,31 +1,124 @@
-# pressgang-shakedown
-Sea trials for PressGang themes – A repeatable end-to-end testing harness for every theme built on the framework — derived from theme config, seeded deterministically, AI-crewed, and cheap to run.
+# 🚢 Shakedown
 
-The route matrix is enumerated from the running site (post types, taxonomy terms, page
-templates, menus, search, 404) and every route is checked automatically — **zero authored
-tests** to get value. Strategy: see RFC-001 "Sea trials for PressGang themes".
+**Shakedown** is end-to-end browser testing for **PressGang WordPress themes** — with **zero tests to write**.
 
-## Usage
+A shakedown cruise is the sea trial of a new vessel: take her out, push every system, find what rattles before the passengers board. Shakedown does the same for your theme. Because PressGang themes declare their post types, taxonomies, templates and menus in `config/`, Shakedown can **derive the whole test suite from the site itself** — enumerate every route, then check each one in a real browser.
+
+Point it at a running site and in under a minute you'll know: does every page render, error-free, with nothing broken aboard? ⛵
+
+---
+
+## ⚡ Quick start
+
+You need Node 20+, WP-CLI, and a PressGang site running locally (any server — Herd, Valet, DDEV, MAMP… it's just a URL).
 
 ```bash
+git clone https://github.com/pressgang-wp/pressgang-shakedown.git
+cd pressgang-shakedown
 npm install
-npm run matrix          # derive .shakedown/matrix.json via WP-CLI (default target)
-npm test                # run all passes
-npm run matrix -- bhp   # derive for a named target
+npx playwright install chromium
 ```
 
-Targets are defined in `shakedown.config.json` (`sitePath` for WP-CLI, `baseUrl` for the browser).
+Add your site as a target in `shakedown.config.json`:
 
-## Test passes
+```json
+{
+  "defaultTarget": "mysite",
+  "targets": {
+    "mysite": {
+      "sitePath": "/path/to/site/wp",
+      "baseUrl": "https://mysite.test",
+      "adminPath": "",
+      "samplesPerType": 2
+    }
+  }
+}
+```
 
-| Pass | File | Checks |
-|---|---|---|
-| 00 availability | `tests/00-availability.spec.ts` | HTTP status matches intent; no PHP/Twig error signatures in the body; `<title>` present. The 404 probe accepts a 404 or a redirect-away (Redirection-plugin catch-alls). HTTP-only — no browser. |
-| 01 integrity | `tests/01-integrity.spec.ts` | Renders each 200 route in Chromium: no JS exceptions, no console errors, no failed same-origin requests, no broken images. |
+- `sitePath` — where WP-CLI can find WordPress (the directory containing `wp-config.php` / core)
+- `baseUrl` — the URL the browser should visit
+- `adminPath` — `""` normally, or `"/wp"` if core lives in a subdirectory
+- `samplesPerType` — how many example singles to test per post type
 
-## Roadmap (from RFC-001)
+Then run the trials:
 
-- Matrix via `wp capstan matrix --format=json` + controller/template oracle assertions
-- Muster-seeded deterministic fixtures; observer mu-plugin (PHP notice capture, render telemetry)
-- Further passes: accessibility (axe), visual snapshots; Trial Report + coverage output
-- Engines: playground self-boot, per-PR InstaWP CI, wp-env fidelity lane
+```bash
+npm run matrix   # 🗺️ enumerate the site's routes → .shakedown/matrix.json
+npm test         # 🧪 run every pass against every route
+```
+
+That's it. No specs written, and your whole public surface just got checked.
+
+---
+
+## 🗺️ What gets tested
+
+`npm run matrix` asks the **running site** (via WP-CLI) for everything it serves:
+
+| Derived from | Routes |
+| --- | --- |
+| Front page | `/` |
+| Every public post type | its archive + sample singles |
+| Every public taxonomy | sample term pages |
+| Page templates | every published page using one |
+| Menus | every internal menu target |
+| Search | `/?s=…` |
+| Unknown URLs | a 404 probe |
+
+Add a post type to your theme's `config/custom-post-types.php` and the next run covers it automatically. The matrix is the map; the passes are the inspection. 🔦
+
+## 🧪 The passes
+
+| Pass | Speed | Checks |
+| --- | --- | --- |
+| **00 · Availability** | ~seconds (HTTP only) | Every route returns its intended status · no PHP/Twig error signatures in the body · a `<title>` is present. The 404 probe accepts a 404 *or* a redirect-away (Redirection-plugin catch-alls are fine). |
+| **01 · Integrity** | ~seconds–minutes (real Chromium) | No JS exceptions · no console errors · no failed same-origin requests · no broken images. |
+
+Useful variations:
+
+```bash
+npm test -- tests/00-availability.spec.ts   # just the fast pass
+npm run test:ui                             # Playwright's watch/UI mode
+npm run matrix -- othersite                 # derive for a named target
+npx playwright show-report                  # browse the last run's HTML report
+```
+
+When something fails you get the exact URL, what was expected, and a Playwright **trace** you can replay step-by-step. 🔍
+
+---
+
+## 💡 Good to know
+
+- **Read-only by design.** The passes only ever GET pages — safe to run against any environment you can reach.
+- **Testing a live shared server?** Runs are parallel; a single retry is built in to absorb load transients on one PHP-FPM.
+- **Self-signed `.test` certificates** are already handled (`ignoreHTTPSErrors`).
+- **True story:** on its very first run, Shakedown found a real bug — category archives returning `200` with an empty body. Zero tests written. That's the pitch. 🐛
+
+---
+
+## ⚓ The PressGang fleet
+
+Shakedown is part of the [PressGang](https://pressgang.dev) ecosystem and is designed to compose with its shipmates:
+
+| Package | Role |
+| --- | --- |
+| [pressgang](https://github.com/pressgang-wp/pressgang) | The parent theme framework (Timber + Twig, config-driven) |
+| [capstan](https://github.com/pressgang-wp/pressgang-capstan) | WP-CLI scaffolding & introspection — future source of the route matrix and per-URL controller/template oracle |
+| [muster](https://github.com/pressgang-wp/pressgang-muster) | Deterministic content seeding — future fixtures for ephemeral test environments |
+| [bosun](https://github.com/pressgang-wp/pressgang-bosun) | AI-agent guidelines & skills — future distribution channel for Shakedown's QA skills |
+
+## 🛠️ Roadmap
+
+- `wp capstan matrix --format=json` + **oracle assertions** — assert each URL rendered via its *intended* controller and Twig template, catching silent fallbacks to `index.php`
+- **Muster-seeded fixtures** for deterministic, hermetic runs
+- **Observer mu-plugin** — PHP notice capture and render telemetry (template/snippet coverage)
+- More passes: **accessibility** (axe-core), **visual snapshots**
+- **Trial Report** — a client-readable HTML report with screenshots and coverage
+- Engines: self-booting **WordPress Playground**, per-PR **InstaWP** CI sites, **wp-env** fidelity lane
+- Published as `@pressgang-wp/shakedown` on npm
+
+## 📋 Requirements
+
+- Node 20+
+- WP-CLI on your PATH
+- A locally reachable PressGang (or any WordPress) site — the derived passes are actually framework-agnostic; PressGang is where the deeper introspection is headed
