@@ -16,9 +16,10 @@ import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
 import { resolveTarget } from '../lib/target.mjs';
-import { deriveMatrix } from '../lib/derive.mjs';
-import { bootSandbox } from '../lib/sandbox.mjs';
+import { deriveMatrix, mergeRoutes } from '../lib/derive.mjs';
+import { bootSandbox, seedAcfStates } from '../lib/sandbox.mjs';
 
 const pkgRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const workspace = process.cwd();
@@ -27,6 +28,26 @@ const argv = process.argv.slice(2);
 const targetFlag = (argv.find((a) => a.startsWith('--target=')) || '').split('=')[1];
 const args = argv.filter((a) => !a.startsWith('--target='));
 const command = args[0] ?? 'all';
+
+/**
+ * Locate Muster's autoloader for sandbox seeding: explicit config first,
+ * then the theme's own composer vendor, then a sibling checkout of the
+ * pressgang-muster repo (fleet-dev convenience).
+ *
+ * @param {ReturnType<import('../lib/target.mjs').resolveTarget>} target
+ * @returns {string|null}
+ */
+function findMusterAutoload(target) {
+  const candidates = [
+    target.sandbox?.musterPath && join(target.sandbox.musterPath, 'vendor/autoload.php'),
+    target.sandbox?.musterPath,
+    join(workspace, 'vendor/pressgang-wp/muster/vendor/autoload.php'),
+    existsSync(join(workspace, 'vendor/pressgang-wp/muster')) ? join(workspace, 'vendor/autoload.php') : null,
+    join(pkgRoot, '../pressgang-muster/vendor/autoload.php'),
+  ].filter(Boolean);
+
+  return candidates.find((p) => existsSync(p)) ?? null;
+}
 
 /** Derive and persist the matrix, printing a summary. */
 function matrix(target) {
@@ -81,9 +102,26 @@ try {
       // the only engine allowed to seed, because nothing persists.
       console.log('⚓ assembling sandbox (fresh SQLite, code symlinked read-only)…');
       const sandbox = await bootSandbox(target);
-      console.log(`⚓ sandbox up at ${sandbox.baseUrl}`);
+      console.log(`⚓ sandbox up at ${sandbox.baseUrl} (isolation verified)`);
       try {
+        // ACF state fixtures — populated + minimal per field group. Seeding
+        // is sandbox-only by design: the isolation witness has already
+        // proven this database is throwaway.
+        let states = [];
+        const muster = findMusterAutoload(target);
+        if (muster) {
+          states = seedAcfStates(sandbox, muster);
+          console.log(`⚓ seeded ${states.length} ACF state fixtures via Muster`);
+        } else {
+          console.log('⚓ Muster not found — skipping ACF state fixtures (set sandbox.musterPath)');
+        }
+
         matrix({ ...target, name: 'sandbox', sitePath: sandbox.root, baseUrl: sandbox.baseUrl });
+
+        if (states.length > 0) {
+          mergeRoutes(workspace, states);
+        }
+
         test(args.slice(1));
       } finally {
         sandbox.stop();
