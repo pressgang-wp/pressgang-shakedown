@@ -18,6 +18,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveTarget } from '../lib/target.mjs';
 import { deriveMatrix } from '../lib/derive.mjs';
+import { bootSandbox } from '../lib/sandbox.mjs';
 
 const pkgRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const workspace = process.cwd();
@@ -74,8 +75,24 @@ try {
       matrix(target);
       test(args.slice(1));
       break;
+    case 'sandbox': {
+      // Throwaway WP: your code, symlinked read-only; its own SQLite DB and
+      // uploads in a temp dir. The real database is never touched — this is
+      // the only engine allowed to seed, because nothing persists.
+      console.log('⚓ assembling sandbox (fresh SQLite, code symlinked read-only)…');
+      const sandbox = await bootSandbox(target);
+      console.log(`⚓ sandbox up at ${sandbox.baseUrl}`);
+      try {
+        matrix({ ...target, name: 'sandbox', sitePath: sandbox.root, baseUrl: sandbox.baseUrl });
+        test(args.slice(1));
+      } finally {
+        sandbox.stop();
+        console.log('⚓ sandbox destroyed');
+      }
+      break;
+    }
     default:
-      console.error(`Unknown command "${command}". Usage: shakedown [matrix|test|ui] [--target=<name>]`);
+      console.error(`Unknown command "${command}". Usage: shakedown [matrix|test|ui|sandbox] [--target=<name>]`);
       process.exitCode = 1;
   }
 } catch (err) {
