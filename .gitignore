@@ -2,3 +2,4 @@ node_modules/
 .shakedown/
 playwright-report/
 test-results/
+.idea/
