@@ -1,12 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { loadMatrix, controllerHeaderName, ERROR_SIGNATURES } from './matrix';
+import { loadMatrix, controllerHeaderName, ERROR_SIGNATURES } from './matrix.mjs';
 
 /**
  * Pass 00 — availability.
  *
  * Every derived route must return its intended status with a body free of
  * PHP/Twig error signatures and carrying a <title>. HTTP-only (no browser),
- * so this pass sweeps the whole site in seconds.
+ * so this pass sweeps the whole site in seconds. Where the observer answers
+ * (sandbox), each route is also checked against the Capstan oracle and for
+ * silent PHP notices.
  */
 const matrix = loadMatrix();
 

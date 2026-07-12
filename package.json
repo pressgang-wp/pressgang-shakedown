@@ -10,7 +10,7 @@
     "bin",
     "lib",
     "tests",
-    "playwright.config.ts",
+    "playwright.config.mjs",
     "README.md"
   ],
   "engines": {

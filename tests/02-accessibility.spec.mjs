@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { loadMatrix } from './matrix';
+import { loadMatrix } from './matrix.mjs';
 
 /**
  * Pass 02 — accessibility.
@@ -17,8 +17,13 @@ const matrix = loadMatrix();
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const FAILING_IMPACTS = ['serious', 'critical'];
 
-/** One-line summary of an axe violation for readable failure output. */
-function describeViolation(v: { id: string; impact?: string | null; nodes: unknown[]; helpUrl: string }): string {
+/**
+ * One-line summary of an axe violation for readable failure output.
+ *
+ * @param {{id: string, impact?: string|null, nodes: unknown[], helpUrl: string}} v
+ * @returns {string}
+ */
+function describeViolation(v) {
   return `[${v.impact}] ${v.id} × ${v.nodes.length} — ${v.helpUrl}`;
 }
 

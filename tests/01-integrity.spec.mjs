@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loadMatrix } from './matrix';
+import { loadMatrix } from './matrix.mjs';
 
 /**
  * Pass 01 — integrity.
@@ -14,9 +14,9 @@ const origin = new URL(matrix.baseUrl).origin;
 
 for (const route of matrix.routes.filter((r) => r.expect === 200)) {
   test(`01 ${route.kind} ${route.url}`, async ({ page }) => {
-    const pageErrors: string[] = [];
-    const consoleErrors: string[] = [];
-    const failedRequests: string[] = [];
+    const pageErrors = [];
+    const consoleErrors = [];
+    const failedRequests = [];
 
     page.on('pageerror', (err) => pageErrors.push(err.message));
     page.on('console', (msg) => {

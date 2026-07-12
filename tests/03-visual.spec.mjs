@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, expect } from '@playwright/test';
-import { loadMatrix } from './matrix';
+import { loadMatrix } from './matrix.mjs';
 
 /**
  * Pass 03 — visual regression.
@@ -20,8 +20,14 @@ const matrix = loadMatrix();
 const workspace = process.env.SHAKEDOWN_WORKSPACE ?? process.cwd();
 const hasBaselines = existsSync(join(workspace, 'tests', '__screenshots__'));
 
-/** Stable, unique snapshot name: kind plus the URL path. */
-function snapshotName(route: { kind: string; url: string }): string {
+/**
+ * Stable, unique snapshot name: kind plus the URL path.
+ * Mirrored in lib/trial-reporter.mjs — keep in sync.
+ *
+ * @param {{kind: string, url: string}} route
+ * @returns {string}
+ */
+function snapshotName(route) {
   const path = new URL(route.url).pathname.replace(/\W+/g, '-').replace(/^-|-$/g, '') || 'home';
   return `${route.kind.replace(/\W+/g, '-')}--${path}.png`;
 }

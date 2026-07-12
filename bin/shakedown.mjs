@@ -88,7 +88,7 @@ function test(extraArgs = []) {
 
   const result = spawnSync(
     process.execPath,
-    [playwrightCli, 'test', `--config=${join(pkgRoot, 'playwright.config.ts')}`, ...extraArgs],
+    [playwrightCli, 'test', `--config=${join(pkgRoot, 'playwright.config.mjs')}`, ...extraArgs],
     {
       cwd: workspace,
       stdio: 'inherit',
