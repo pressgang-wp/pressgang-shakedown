@@ -39,6 +39,8 @@ const command = args[0] ?? 'all';
  */
 function findMusterAutoload(target) {
   const candidates = [
+    process.env.SHAKEDOWN_MUSTER_PATH && join(process.env.SHAKEDOWN_MUSTER_PATH, 'vendor/autoload.php'),
+    process.env.SHAKEDOWN_MUSTER_PATH,
     target.sandbox?.musterPath && join(target.sandbox.musterPath, 'vendor/autoload.php'),
     target.sandbox?.musterPath,
     join(workspace, 'vendor/pressgang-wp/muster/vendor/autoload.php'),
@@ -78,7 +80,7 @@ function test(extraArgs = []) {
 }
 
 try {
-  const target = resolveTarget(workspace, { target: targetFlag });
+  const target = resolveTarget(workspace, { target: targetFlag }, { requireBaseUrl: command !== 'sandbox' });
 
   switch (command) {
     case 'matrix':

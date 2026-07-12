@@ -92,6 +92,24 @@ When something fails you get the exact URL, what was expected, and a Playwright 
 
 ---
 
+## 🤖 CI
+
+A reusable GitHub Actions workflow runs the full sandbox suite on every push — no MySQL, no Docker, no site bundle. The theme repo is the only input: WordPress core is downloaded bare, your `composer.json`'s installer-paths provision the parent theme and plugins, and the sandbox brings its own SQLite database and ACF state fixtures.
+
+In your theme repo, `.github/workflows/shakedown.yml`:
+
+```yaml
+name: Shakedown
+on: [push, pull_request]
+jobs:
+  shakedown:
+    uses: pressgang-wp/pressgang-shakedown/.github/workflows/shakedown.yml@main
+    secrets:
+      COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}   # ACF Pro credentials, if composer-managed
+```
+
+Inputs (all optional): `theme` (defaults to the repo name), `php-version`, `wp-version`, `node-version`. The Playwright HTML report and route matrix upload as artifacts on every run. Suits theme-shaped repos; site-shaped repos work too once their theme path is passed as `theme`. 🧪
+
 ## ⚓ The PressGang fleet
 
 Shakedown is part of the [PressGang](https://pressgang.dev) ecosystem and is designed to compose with its shipmates:

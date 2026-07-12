@@ -1,0 +1,129 @@
+# Reusable shakedown CI: hermetic sea trials for a PressGang theme repo.
+#
+# Assembles a bare WordPress around the theme (core downloaded, parent theme
+# and plugins provisioned by the theme's own composer.json installer-paths),
+# then runs `shakedown sandbox`: throwaway SQLite database, derived route
+# matrix, ACF state fixtures via Muster, and every pass (availability,
+# integrity, accessibility). No MySQL, no Docker, no site bundle — the theme
+# repo is the only input.
+#
+# Call from a theme repo:
+#
+#   name: Shakedown
+#   on: [push, pull_request]
+#   jobs:
+#     shakedown:
+#       uses: pressgang-wp/pressgang-shakedown/.github/workflows/shakedown.yml@main
+#       secrets:
+#         COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}   # ACF Pro credentials (composer auth.json JSON)
+#
+name: Shakedown
+
+on:
+  workflow_call:
+    inputs:
+      theme:
+        description: Theme directory name. Defaults to the repository name.
+        type: string
+        default: ''
+      php-version:
+        type: string
+        default: '8.3'
+      wp-version:
+        description: WordPress core version to test against.
+        type: string
+        default: 'latest'
+      node-version:
+        type: string
+        default: '20'
+    secrets:
+      COMPOSER_AUTH:
+        description: Composer auth JSON (e.g. ACF Pro credentials). Optional.
+        required: false
+
+jobs:
+  shakedown:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve theme name
+        id: theme
+        run: echo "name=${{ inputs.theme != '' && inputs.theme || github.event.repository.name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout theme into a WordPress-shaped tree
+        uses: actions/checkout@v4
+        with:
+          path: site/wp-content/themes/${{ steps.theme.outputs.name }}
+
+      - name: Set up PHP + WP-CLI
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ inputs.php-version }}
+          extensions: gd, intl, zip, pdo_sqlite, sqlite3
+          tools: composer, wp-cli
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Download WordPress core
+        run: |
+          wp core download --path=site --version=${{ inputs.wp-version }} --skip-content --force
+          mkdir -p site/wp-content/plugins site/wp-content/mu-plugins
+          # Placeholder only — the shakedown sandbox writes its own config.
+          printf '<?php // CI placeholder; shakedown sandbox provides real config.\n' > site/wp-config.php
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer
+          key: composer-${{ runner.os }}-${{ hashFiles('site/wp-content/themes/*/composer.lock') }}
+
+      - name: Composer install (parent theme + plugins via installer-paths)
+        working-directory: site/wp-content/themes/${{ steps.theme.outputs.name }}
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+        run: composer install --no-dev --no-interaction --no-progress
+
+      - name: ACF Pro mu-plugin loader
+        run: |
+          if [ -d site/wp-content/mu-plugins/advanced-custom-fields-pro ]; then
+            printf '<?php require_once WPMU_PLUGIN_DIR . "/advanced-custom-fields-pro/acf.php";\n' \
+              > site/wp-content/mu-plugins/acf.php
+          fi
+
+      - name: Capstan (oracle-annotated route derivation — optional)
+        continue-on-error: true
+        run: wp package install https://github.com/pressgang-wp/pressgang-capstan.git
+
+      - name: Muster (ACF state fixtures)
+        run: |
+          git clone --depth=1 https://github.com/pressgang-wp/pressgang-muster.git "$HOME/pressgang-muster"
+          composer install --no-dev --no-interaction --no-progress -d "$HOME/pressgang-muster"
+          echo "SHAKEDOWN_MUSTER_PATH=$HOME/pressgang-muster" >> "$GITHUB_ENV"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}
+
+      - name: Install shakedown
+        working-directory: site/wp-content/themes/${{ steps.theme.outputs.name }}
+        run: |
+          npm install --no-save github:pressgang-wp/pressgang-shakedown
+          npx playwright install --with-deps chromium
+
+      - name: Run sea trials
+        working-directory: site/wp-content/themes/${{ steps.theme.outputs.name }}
+        run: npx shakedown sandbox
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shakedown-report
+          path: |
+            site/wp-content/themes/${{ steps.theme.outputs.name }}/playwright-report
+            site/wp-content/themes/${{ steps.theme.outputs.name }}/.shakedown
+          retention-days: 14
