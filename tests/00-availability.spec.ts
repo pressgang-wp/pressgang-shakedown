@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loadMatrix, ERROR_SIGNATURES } from './matrix';
+import { loadMatrix, controllerHeaderName, ERROR_SIGNATURES } from './matrix';
 
 /**
  * Pass 00 — availability.
@@ -38,6 +38,27 @@ for (const route of matrix.routes) {
 
     if (route.expect === 200) {
       expect(body, `missing <title> on ${route.url}`).toMatch(/<title>[^<]+<\/title>/i);
+    }
+
+    // Oracle assertions — active when the observer answered (sandbox) and
+    // the matrix carries capstan --resolve expectations for this route.
+    const headers = res.headers();
+
+    if (route.template && headers['x-shakedown-template']) {
+      expect(headers['x-shakedown-template'], `template oracle for ${route.url}`).toBe(route.template);
+    }
+
+    if (route.controller && headers['x-shakedown-controller']) {
+      expect(headers['x-shakedown-controller'], `controller oracle for ${route.url}`).toBe(
+        controllerHeaderName(route.controller)
+      );
+    }
+
+    // PHP issues are counted by the observer even when display/log are off —
+    // a page can look perfect and still be raising notices on every request.
+    if (headers['x-shakedown-php-issues'] !== undefined) {
+      const sample = decodeURIComponent(headers['x-shakedown-php-sample'] ?? '');
+      expect(Number(headers['x-shakedown-php-issues']), `PHP notices/warnings on ${route.url}: ${sample}`).toBe(0);
     }
   });
 }

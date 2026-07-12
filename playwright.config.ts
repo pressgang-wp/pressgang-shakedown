@@ -23,7 +23,15 @@ export default defineConfig({
   // Attached mode drives one shared PHP-FPM; a single retry absorbs load transients.
   retries: 1,
   outputDir: join(workspace, 'test-results'),
-  reporter: [['list'], ['html', { outputFolder: join(workspace, 'playwright-report'), open: 'never' }]],
+  // Visual baselines belong to the THEME (committed in its repo), keyed by
+  // platform because font rendering differs across OSes — macOS baselines
+  // and CI Linux baselines coexist.
+  snapshotPathTemplate: join(workspace, 'tests', '__screenshots__', '{platform}', '{arg}{ext}'),
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: join(workspace, 'playwright-report'), open: 'never' }],
+    [join(pkgRoot, 'lib', 'trial-reporter.mjs')],
+  ],
   use: {
     ignoreHTTPSErrors: true,
     trace: 'retain-on-failure',

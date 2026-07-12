@@ -8,6 +8,20 @@ export interface Route {
   kind: string;
   /** Intended HTTP status (200 for real routes, 404 for the unknown-URL probe). */
   expect: number;
+  /** Oracle (capstan --resolve): basename of the PHP template WP should choose. */
+  template?: string;
+  /** Oracle: FQCN of the controller that should render (dispatched routes only). */
+  controller?: string | null;
+}
+
+/**
+ * The observer reports controllers as the snake_case short name used in the
+ * pressgang_render_{key} action; the oracle stores an FQCN. Normalise the
+ * FQCN to the observer's shape for comparison.
+ */
+export function controllerHeaderName(fqcn: string): string {
+  const short = fqcn.split('\\').pop() ?? fqcn;
+  return short.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
 }
 
 /** The derived matrix written by `npm run matrix` (bin/derive-matrix.mjs). */

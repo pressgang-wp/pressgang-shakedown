@@ -84,6 +84,8 @@ foreach (AcfJson::groups($acfJsonDir) as $group) {
 			->title(($group['title'] ?? $group['key']) . ' — ' . $variant)
 			->slug("state-{$slugBase}-{$variant}")
 			->status('publish')
+			->date('2026-01-01 09:00:00') // pinned: rendered dates must not drift between runs
+
 			->content('State fixture: ' . $slugBase . ' (' . $variant . ')')
 			->acf($values)
 			->save();
