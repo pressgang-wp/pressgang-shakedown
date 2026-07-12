@@ -18,7 +18,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { resolveTarget } from '../lib/target.mjs';
-import { deriveMatrix, mergeRoutes } from '../lib/derive.mjs';
+import { capstanDoctor, deriveMatrix, mergeRoutes } from '../lib/derive.mjs';
 import { bootSandbox, seedAcfStates } from '../lib/sandbox.mjs';
 
 const pkgRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -49,6 +49,26 @@ function findMusterAutoload(target) {
   ].filter(Boolean);
 
   return candidates.find((p) => existsSync(p)) ?? null;
+}
+
+/**
+ * Pre-flight: surface `wp capstan doctor` config health before testing.
+ * A theme with FAILing checks isn't worth driving a browser at — abort with
+ * the failing checks named. Silent no-op when Capstan isn't installed.
+ */
+function preflight(sitePath) {
+  const health = capstanDoctor(sitePath);
+  if (!health) return;
+
+  console.log(`⚓ capstan doctor: ${health.checks.length} checks, ${health.failures} failures, ${health.warnings} warnings`);
+
+  for (const check of health.checks.filter((c) => c.status !== 'OK')) {
+    console.log(`  [${check.status}] ${check.check}: ${check.detail}`);
+  }
+
+  if (health.failures > 0) {
+    throw new Error('capstan doctor reports configuration failures — fix the theme before running trials.');
+  }
 }
 
 /** Derive and persist the matrix, printing a summary. */
@@ -95,6 +115,7 @@ try {
       test(['--ui']);
       break;
     case 'all':
+      preflight(target.sitePath);
       matrix(target);
       test(args.slice(1));
       break;
@@ -118,6 +139,7 @@ try {
           console.log('⚓ Muster not found — skipping ACF state fixtures (set sandbox.musterPath)');
         }
 
+        preflight(sandbox.root);
         matrix({ ...target, name: 'sandbox', sitePath: sandbox.root, baseUrl: sandbox.baseUrl });
 
         if (states.length > 0) {
