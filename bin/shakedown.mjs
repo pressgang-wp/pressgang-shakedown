@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { resolveTarget } from '../lib/target.mjs';
 import { capstanDoctor, deriveMatrix, mergeRoutes } from '../lib/derive.mjs';
-import { bootSandbox, seedAcfStates } from '../lib/sandbox.mjs';
+import { bootSandbox, DEFAULT_FIXTURE_EPOCH, seedAcfStates } from '../lib/sandbox.mjs';
 
 const pkgRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const workspace = process.cwd();
@@ -133,7 +133,10 @@ try {
         let states = [];
         const muster = findMusterAutoload(target);
         if (muster) {
-          states = seedAcfStates(sandbox, muster);
+          states = seedAcfStates(sandbox, muster, {
+            seed: target.sandbox?.seed ?? 42,
+            epoch: target.sandbox?.epoch ?? DEFAULT_FIXTURE_EPOCH,
+          });
           console.log(`⚓ seeded ${states.length} ACF state fixtures via Muster`);
         } else {
           console.log('⚓ Muster not found — skipping ACF state fixtures (set sandbox.musterPath)');

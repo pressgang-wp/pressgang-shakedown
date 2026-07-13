@@ -10,11 +10,19 @@
  *   - minimal:   required fields only — the sparsest state an editor can
  *                legally publish, where empty-link/missing-image bugs live
  *
- * Run via: wp eval-file bin/seed-states.php <muster-autoload> <acf-json-dir> <seed>
+ * Run via: wp eval-file bin/seed-states.php <muster-autoload> <acf-json-dir> <seed> <epoch>
  * Emits JSON: {"routes": [{url, kind, expect}...]} for the matrix.
  */
 
-[$autoload, $acfJsonDir, $seed] = [$args[0], $args[1], (int) ($args[2] ?? 42)];
+if (count($args) < 4) {
+	throw new InvalidArgumentException('seed-states.php requires Muster autoload, ACF JSON directory, seed, and epoch arguments.');
+}
+
+[$autoload, $acfJsonDir, $seed, $epoch] = [$args[0], $args[1], (int) $args[2], (string) $args[3]];
+
+if (! preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/i', $epoch)) {
+	throw new InvalidArgumentException('Fixture epoch must be a timezone-qualified ISO 8601 datetime.');
+}
 
 require_once $autoload;
 
@@ -24,10 +32,17 @@ use PressGang\Muster\Adapters\LiveAcfAdapter;
 use PressGang\Muster\Builders\AttachmentBuilder;
 use PressGang\Muster\Builders\PostBuilder;
 use PressGang\Muster\Builders\TermBuilder;
+use PressGang\Muster\Clock\FixtureClock;
 use PressGang\Muster\MusterContext;
 use PressGang\Muster\Victuals\VictualsFactory;
 
-$context = new MusterContext(new VictualsFactory(), acf: new LiveAcfAdapter(), seed: $seed);
+$context = new MusterContext(
+	new VictualsFactory(),
+	acf: new LiveAcfAdapter(),
+	seed: $seed,
+	clock: new FixtureClock($epoch),
+);
+$fixtureDate = $context->clock()->epoch()->format('Y-m-d H:i:s');
 
 $generator = new AcfValueGenerator($context->victuals(), [
 	'attachment' => fn (string $name): int => (new AttachmentBuilder($context, 'state-' . sanitize_title($name)))
@@ -84,7 +99,7 @@ foreach (AcfJson::groups($acfJsonDir) as $group) {
 			->title(($group['title'] ?? $group['key']) . ' — ' . $variant)
 			->slug("state-{$slugBase}-{$variant}")
 			->status('publish')
-			->date('2026-01-01 09:00:00') // pinned: rendered dates must not drift between runs
+			->date($fixtureDate)
 
 			->content('State fixture: ' . $slugBase . ' (' . $variant . ')')
 			->acf($values)
