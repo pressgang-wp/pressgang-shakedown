@@ -36,6 +36,10 @@ on:
       node-version:
         type: string
         default: '20'
+      muster-ref:
+        description: Exact Muster Git commit used for deterministic ACF fixtures.
+        type: string
+        default: 'deca7dd4c13575537e5aa780ff276e24d1dd5eec'
     secrets:
       COMPOSER_AUTH:
         description: Composer auth JSON (e.g. ACF Pro credentials). Optional.
@@ -96,9 +100,12 @@ jobs:
         continue-on-error: true
         run: wp package install https://github.com/pressgang-wp/pressgang-capstan.git
 
-      - name: Muster (ACF state fixtures)
+      - name: Muster (pinned ACF state fixture engine)
         run: |
-          git clone --depth=1 https://github.com/pressgang-wp/pressgang-muster.git "$HOME/pressgang-muster"
+          git init "$HOME/pressgang-muster"
+          git -C "$HOME/pressgang-muster" remote add origin https://github.com/pressgang-wp/pressgang-muster.git
+          git -C "$HOME/pressgang-muster" fetch --depth=1 origin "${{ inputs.muster-ref }}"
+          git -C "$HOME/pressgang-muster" checkout --detach FETCH_HEAD
           composer install --no-dev --no-interaction --no-progress -d "$HOME/pressgang-muster"
           echo "SHAKEDOWN_MUSTER_PATH=$HOME/pressgang-muster" >> "$GITHUB_ENV"
 
