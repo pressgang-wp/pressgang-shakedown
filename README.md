@@ -35,11 +35,20 @@ Optional `shakedown.config.json` in the theme, for overrides only:
 {
   "baseUrl": "https://mysite.test",
   "samplesPerType": 2,
-  "searchTerm": "bikes"
+  "searchTerm": "bikes",
+  "sandbox": {
+    "seed": 42,
+    "epoch": "2026-01-01T09:00:00+00:00"
+  }
 }
 ```
 
 Authored journeys (form submissions, checkout flows) live in your theme's `tests/e2e/` — when present they run alongside the derived passes as the `journeys` project.
+
+Sandbox fixture randomness and time are separate deterministic inputs. `seed`
+controls generated values; `epoch` fixes relative dates used by Muster,
+including ACF date fields and the fixture posts themselves. It must be a
+timezone-qualified ISO 8601 datetime.
 
 **Introspection:** when [Capstan](https://github.com/pressgang-wp/pressgang-capstan) is installed (`wp package install pressgang-wp/pressgang-capstan`), the matrix comes from `wp capstan matrix --resolve` — including each route's expected template and controller. Without it, a bundled fallback derives the same routes minus the oracle data.
 
@@ -108,7 +117,12 @@ jobs:
       COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}   # ACF Pro credentials, if composer-managed
 ```
 
-Inputs (all optional): `theme` (defaults to the repo name), `php-version`, `wp-version`, `node-version`. The Playwright HTML report and route matrix upload as artifacts on every run. Suits theme-shaped repos; site-shaped repos work too once their theme path is passed as `theme`. 🧪
+Inputs (all optional): `theme` (defaults to the repo name), `php-version`,
+`wp-version`, `node-version`, and `muster-ref`. The workflow pins `muster-ref` to
+the exact fixture engine revision it was verified against; override it only as
+an intentional compatibility test. The Playwright HTML report and route matrix
+upload as artifacts on every run. Suits theme-shaped repos; site-shaped repos
+work too once their theme path is passed as `theme`. 🧪
 
 ## ⚓ The PressGang fleet
 
@@ -118,13 +132,12 @@ Shakedown is part of the [PressGang](https://pressgang.dev) ecosystem and is des
 | --- | --- |
 | [pressgang](https://github.com/pressgang-wp/pressgang) | The parent theme framework (Timber + Twig, config-driven) |
 | [capstan](https://github.com/pressgang-wp/pressgang-capstan) | WP-CLI scaffolding & introspection — future source of the route matrix and per-URL controller/template oracle |
-| [muster](https://github.com/pressgang-wp/pressgang-muster) | Deterministic content seeding — future fixtures for ephemeral test environments |
+| [muster](https://github.com/pressgang-wp/pressgang-muster) | Seeds deterministic populated/minimal ACF states in the disposable sandbox |
 | [bosun](https://github.com/pressgang-wp/pressgang-bosun) | AI-agent guidelines & skills — future distribution channel for Shakedown's QA skills |
 
 ## 🛠️ Roadmap
 
 - `wp capstan matrix --format=json` + **oracle assertions** — assert each URL rendered via its *intended* controller and Twig template, catching silent fallbacks to `index.php`
-- **Muster-seeded fixtures** for deterministic, hermetic runs
 - **Observer mu-plugin** — PHP notice capture and render telemetry (template/snippet coverage)
 - More passes: **accessibility** (axe-core), **visual snapshots**
 - **Trial Report** — a client-readable HTML report with screenshots and coverage
