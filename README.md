@@ -45,7 +45,7 @@ Optional `shakedown.config.json` in the theme, for overrides only:
 
 Authored journeys (form submissions, checkout flows) live in your theme's `tests/e2e/` — when present they run alongside the derived passes as the `journeys` project.
 
-**Seeding is convention-first.** If your theme ships [Muster](https://github.com/pressgang-wp/pressgang-muster) seeders (`src/Muster/*`), the sandbox runs them via `wp capstan seed` as the baseline — your real menus, terms and pages — then layers the derived populated/minimal ACF state fixtures on top. A theme that ships no seeders is unaffected: the derived layer covers it on its own, so it does a good job out of the box.
+**Seeding is convention-first.** If your theme ships [Muster](https://github.com/pressgang-wp/pressgang-muster) seeders (a top-level `muster/` directory), the sandbox runs them via `wp capstan seed` as the baseline — your real menus, terms and pages — then layers the derived populated/minimal ACF state fixtures on top. A theme that ships no seeders is unaffected: the derived layer covers it on its own, so it does a good job out of the box.
 
 Sandbox fixture randomness and time are separate deterministic inputs. `seed`
 controls generated values; `epoch` fixes relative dates used by Muster,
