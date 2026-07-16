@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { resolveTarget } from '../lib/target.mjs';
 import { capstanDoctor, deriveMatrix, mergeRoutes } from '../lib/derive.mjs';
-import { bootSandbox, DEFAULT_FIXTURE_EPOCH, seedAcfStates } from '../lib/sandbox.mjs';
+import { bootSandbox, DEFAULT_FIXTURE_EPOCH, seedAcfStates, seedThemeMuster } from '../lib/sandbox.mjs';
 
 const pkgRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const workspace = process.cwd();
@@ -130,13 +130,20 @@ try {
         // ACF state fixtures — populated + minimal per field group. Seeding
         // is sandbox-only by design: the isolation witness has already
         // proven this database is throwaway.
+        const seed = target.sandbox?.seed ?? 42;
+        const epoch = target.sandbox?.epoch ?? DEFAULT_FIXTURE_EPOCH;
+
+        // Convention-first baseline: run the theme's own Muster seeders so its
+        // real menus, terms and pages are present. Falls through silently when
+        // the theme ships none — the derived ACF states below still cover it.
+        if (seedThemeMuster(sandbox, { seed })) {
+          console.log('⚓ seeded theme baseline via `wp capstan seed`');
+        }
+
         let states = [];
         const muster = findMusterAutoload(target);
         if (muster) {
-          states = seedAcfStates(sandbox, muster, {
-            seed: target.sandbox?.seed ?? 42,
-            epoch: target.sandbox?.epoch ?? DEFAULT_FIXTURE_EPOCH,
-          });
+          states = seedAcfStates(sandbox, muster, { seed, epoch });
           console.log(`⚓ seeded ${states.length} ACF state fixtures via Muster`);
         } else {
           console.log('⚓ Muster not found — skipping ACF state fixtures (set sandbox.musterPath)');
