@@ -3,13 +3,21 @@
   "version": "0.1.0",
   "description": "Sea trials for PressGang themes — config-derived e2e smoke testing",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pressgang-wp/pressgang-shakedown.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "shakedown": "bin/shakedown.mjs"
   },
   "files": [
     "bin",
     "lib",
-    "tests",
+    "php",
     "playwright.config.mjs",
     "README.md"
   ],

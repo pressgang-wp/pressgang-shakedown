@@ -13,7 +13,7 @@ Point it at a running site and in under a minute you'll know: does every page re
 You need Node 20+, WP-CLI, and a PressGang site running locally (any server — Herd, Valet, DDEV, MAMP… it's just a URL). From inside your theme:
 
 ```bash
-npm i -D github:pressgang-wp/pressgang-shakedown
+npm i -D @pressgang-wp/shakedown
 npx playwright install chromium   # once per machine
 npx shakedown                     # ⚓ derive the matrix, run every pass
 ```
@@ -142,7 +142,6 @@ Shakedown is part of the [PressGang](https://pressgang.dev) ecosystem and is des
 - More passes: **accessibility** (axe-core), **visual snapshots**
 - **Trial Report** — a client-readable HTML report with screenshots and coverage
 - Engines: self-booting **WordPress Playground**, per-PR **InstaWP** CI sites, **wp-env** fidelity lane
-- Published as `@pressgang-wp/shakedown` on npm
 
 ## 📋 Requirements
 
