@@ -1,6 +1,6 @@
 {
   "name": "@pressgang-wp/shakedown",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Sea trials for PressGang themes — config-derived e2e smoke testing",
   "type": "module",
   "license": "MIT",
