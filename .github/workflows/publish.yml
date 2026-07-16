@@ -18,12 +18,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org
 
-      # OIDC Trusted Publishing (token-free auth) requires npm >= 11.5.1; Node 20
-      # ships npm 10, which can sign provenance but cannot authenticate via OIDC,
-      # so the publish PUT 404s. Upgrade to a supporting npm first.
+      # OIDC Trusted Publishing (token-free auth) requires npm >= 11.5.1. Node 24
+      # ships a modern npm and satisfies npm@latest's engine requirement (npm 12
+      # needs Node >= 24.15); upgrade to be certain OIDC auth is supported.
       - run: npm install --global npm@latest
 
       # Trusted Publishing (configure the package's Trusted Publisher on npmjs.com
