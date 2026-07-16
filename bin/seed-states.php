@@ -56,13 +56,23 @@ $generator = new AcfValueGenerator($context->victuals(), [
 		->id(),
 	'post' => function (array $types) use ($context): int {
 		$type = $types[0] ?? 'post';
+		$slug = 'state-related-' . sanitize_title($type);
 
-		return (new PostBuilder($context, $type))
+		$ref = (new PostBuilder($context, $type))
 			->title('State related ' . $type)
-			->slug('state-related-' . sanitize_title($type))
+			->slug($slug)
 			->status('publish')
-			->save()
-			->id();
+			// Pin before the fixture epoch so relationship stubs sink below the
+			// real fixtures in date-ordered feeds rather than heading them.
+			->date($context->clock()->epoch()->modify('-1 year')->format('Y-m-d H:i:s'))
+			->save();
+
+		(new AttachmentBuilder($context, "{$slug}-thumb"))
+			->placeholder(1200, 800)
+			->featuredOn($ref)
+			->save();
+
+		return $ref->id();
 	},
 	'term' => fn (string $taxonomy): int => (new TermBuilder($context, $taxonomy))
 		->name('State term')
