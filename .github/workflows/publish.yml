@@ -1,0 +1,27 @@
+name: Publish to npm
+
+# Publishes on a GitHub Release, not on every push — npm rejects republishing an
+# existing version, so a release (a deliberate version bump + tag) is the trigger.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # OIDC: authenticates to npm via Trusted Publishing, no stored token
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      # Trusted Publishing (configure the package's Trusted Publisher on npmjs.com
+      # to point at this repo + workflow). --provenance attaches a verifiable link
+      # back to this public repo and workflow run.
+      - run: npm publish --provenance --access public
