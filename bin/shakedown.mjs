@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { resolveTarget } from '../lib/target.mjs';
 import { capstanDoctor, deriveMatrix, mergeRoutes } from '../lib/derive.mjs';
-import { bootSandbox, DEFAULT_FIXTURE_EPOCH, seedAcfStates, seedThemeMuster } from '../lib/sandbox.mjs';
+import { bootSandbox, DEFAULT_FIXTURE_EPOCH, seedAcfStates, seedJourneySetups, seedThemeMuster } from '../lib/sandbox.mjs';
 
 const pkgRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const workspace = process.cwd();
@@ -149,12 +149,22 @@ try {
           console.log('⚓ Muster not found — skipping ACF state fixtures (set sandbox.musterPath)');
         }
 
+        // Per-journey scenarios: tests/e2e/*.setup.php seed the fixtures their
+        // paired *.spec.mjs feature tests assert on.
+        const journeys = seedJourneySetups(sandbox, muster, workspace, { seed, epoch });
+        if (journeys > 0) {
+          console.log(`⚓ seeded ${journeys} journey scenario(s) from tests/e2e/*.setup.php`);
+        }
+
         preflight(sandbox.root);
         matrix({ ...target, name: 'sandbox', sitePath: sandbox.root, baseUrl: sandbox.baseUrl });
 
         if (states.length > 0) {
           mergeRoutes(workspace, states);
         }
+
+        // Give journeys (tests/e2e/) a base URL to navigate against.
+        process.env.SHAKEDOWN_BASE_URL = sandbox.baseUrl;
 
         test(args.slice(1));
       } finally {

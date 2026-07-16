@@ -33,6 +33,10 @@ export default defineConfig({
     [join(pkgRoot, 'lib', 'trial-reporter.mjs')],
   ],
   use: {
+    // Journeys (tests/e2e/) navigate with relative paths; the CLI exports the
+    // sandbox/target origin so page.goto('/path') resolves. Derived passes use
+    // full matrix URLs and ignore this.
+    baseURL: process.env.SHAKEDOWN_BASE_URL || undefined,
     ignoreHTTPSErrors: true,
     trace: 'retain-on-failure',
   },
