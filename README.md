@@ -45,6 +45,8 @@ Optional `shakedown.config.json` in the theme, for overrides only:
 
 Authored journeys (form submissions, checkout flows) live in your theme's `tests/e2e/` — when present they run alongside the derived passes as the `journeys` project.
 
+**Seeding is convention-first.** If your theme ships [Muster](https://github.com/pressgang-wp/pressgang-muster) seeders (`src/Muster/*`), the sandbox runs them via `wp capstan seed` as the baseline — your real menus, terms and pages — then layers the derived populated/minimal ACF state fixtures on top. A theme that ships no seeders is unaffected: the derived layer covers it on its own, so it does a good job out of the box.
+
 Sandbox fixture randomness and time are separate deterministic inputs. `seed`
 controls generated values; `epoch` fixes relative dates used by Muster,
 including ACF date fields and the fixture posts themselves. It must be a
@@ -132,7 +134,7 @@ Shakedown is part of the [PressGang](https://pressgang.dev) ecosystem and is des
 | --- | --- |
 | [pressgang](https://github.com/pressgang-wp/pressgang) | The parent theme framework (Timber + Twig, config-driven) |
 | [capstan](https://github.com/pressgang-wp/pressgang-capstan) | WP-CLI scaffolding & introspection — future source of the route matrix and per-URL controller/template oracle |
-| [muster](https://github.com/pressgang-wp/pressgang-muster) | Seeds deterministic populated/minimal ACF states in the disposable sandbox |
+| [muster](https://github.com/pressgang-wp/pressgang-muster) | Runs the theme's own seeders as the sandbox baseline, and seeds deterministic populated/minimal ACF states on top |
 | [bosun](https://github.com/pressgang-wp/pressgang-bosun) | AI-agent guidelines & skills — future distribution channel for Shakedown's QA skills |
 
 ## 🛠️ Roadmap
