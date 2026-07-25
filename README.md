@@ -84,10 +84,10 @@ Add a post type to your theme's `config/custom-post-types.php` and the next run 
 Useful variations:
 
 ```bash
-npm test -- tests/00-availability.spec.ts   # just the fast pass
-npm run test:ui                             # Playwright's watch/UI mode
-npm run matrix -- othersite                 # derive for a named target
-npx playwright show-report                  # browse the last run's HTML report
+npx shakedown test 00-availability      # just the fast pass
+npx shakedown ui                        # Playwright's watch/UI mode
+npx shakedown matrix --target=othersite # derive for a named target
+npx playwright show-report              # browse the last run's HTML report
 ```
 
 When something fails you get the exact URL, what was expected, and a Playwright **trace** you can replay step-by-step. 🔍

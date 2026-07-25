@@ -44,6 +44,14 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
   only input; the sandbox brings its own SQLite database and uploads.
 - **Node ESM (`.mjs`).** Keep the runner in JS; reach for PHP only when the code
   must execute inside a booted WordPress.
+- **`passes/` is the product; `tests/` is ours.** The shipped checks live in
+  `passes/` (published, run against the consumer's site). This repo's own unit
+  tests live in `tests/unit/` and are never published. Never put a unit test in
+  `passes/`: Playwright's `testDir` scans it recursively, and a `node:test` file
+  there executes during test *collection* — before any route is checked — which
+  can abort the whole run. A third `tests/` exists and is not ours at all: the
+  consumer theme's `tests/e2e/` journeys and `tests/__screenshots__/` baselines,
+  always reached via `workspace`, never `pkgRoot`.
 
 ---
 
@@ -52,7 +60,7 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
 - **Target** (`lib/target.mjs`)
   Resolves the site path, base URL, and `shakedown.config.json` for a run —
   including central mode, where one clone drives any registered `--target`.
-- **Matrix** (`lib/derive.mjs`, `tests/matrix.mjs`)
+- **Matrix** (`lib/derive.mjs`, `passes/matrix.mjs`)
   Every route the site serves: front page, each public post type's archive and
   sample singles, taxonomy term pages, pages per registered template, internal
   menu targets, a search probe, and a 404 probe. From `wp capstan matrix
@@ -70,7 +78,7 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
      bugs live.
   3. **Per-journey scenarios** — `tests/e2e/*.setup.php` (`seedJourneySetups`),
      each arranging the fixtures its paired `*.spec.mjs` asserts on.
-- **Passes** (`tests/00`–`03`)
+- **Passes** (`passes/00`–`03`)
   `00` Availability (HTTP: status, no PHP/Twig error output, a `<title>`),
   `01` Integrity (Chromium: no JS exceptions, console errors, failed requests,
   broken images), `02` Accessibility (axe-core WCAG 2.1 A/AA),
@@ -139,7 +147,8 @@ GitHub Release (`.github/workflows/publish.yml`) — no stored token, no OTP.
 - `lib/sandbox.mjs` — sandbox assembly, isolation witness, seeding layers
 - `lib/derive.mjs` — matrix derivation, Capstan oracle/doctor, route merge
 - `lib/target.mjs` — target/config resolution
-- `tests/00`–`03`, `tests/matrix.mjs` — the passes and their route source
+- `passes/00`–`03`, `passes/matrix.mjs` — the passes and their route source
+- `tests/unit/` — this repo's own unit tests (never published)
 - `php/observer.php`, `bin/seed-states.php` — the in-WordPress helpers
 - `playwright.config.mjs`, `README.md`
 

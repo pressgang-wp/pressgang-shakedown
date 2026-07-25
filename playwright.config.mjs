@@ -8,8 +8,14 @@ import { fileURLToPath } from 'node:url';
  *
  * The workspace (SHAKEDOWN_WORKSPACE, set by the CLI — falls back to this
  * package for standalone use) owns all run artifacts: matrix, reports,
- * traces. The derived passes live in this package; a workspace `tests/e2e/`
- * directory, when present, runs alongside them as the journeys suite.
+ * traces. The derived passes live in this package's `passes/`; a workspace
+ * `tests/e2e/` directory, when present, runs alongside them as the journeys
+ * suite.
+ *
+ * Note the two distinct `tests/` meanings: paths built from `workspace` are
+ * the CONSUMER theme's (its journeys and committed visual baselines), while
+ * this package's own shipped checks live in `passes/` — deliberately not
+ * `tests/`, which is reserved for this repo's unit tests and is not published.
  *
  * `ignoreHTTPSErrors` accommodates self-signed local TLS (.test domains);
  * traces are kept on failure so any red route can be replayed step-by-step.
@@ -41,9 +47,9 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
-    { name: 'derived', testDir: join(pkgRoot, 'tests') },
-    ...(existsSync(journeysDir) && journeysDir !== join(pkgRoot, 'tests')
-      ? [{ name: 'journeys', testDir: journeysDir }]
-      : []),
+    // testMatch is explicit: the passes are a closed set of *.spec.mjs files,
+    // so a helper or a stray *.test.mjs alongside them is never collected.
+    { name: 'derived', testDir: join(pkgRoot, 'passes'), testMatch: '**/*.spec.mjs' },
+    ...(existsSync(journeysDir) ? [{ name: 'journeys', testDir: journeysDir }] : []),
   ],
 });
