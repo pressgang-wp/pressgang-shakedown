@@ -29,6 +29,14 @@ export default defineConfig({
   // Attached mode drives one shared PHP-FPM; a single retry absorbs load transients.
   retries: 1,
   outputDir: join(workspace, 'test-results'),
+  // Never mint a visual baseline as a side effect of a run. Playwright's
+  // default ('missing') writes one for any route that lacks it, fails that
+  // attempt, then passes on the retry — so an attached run against a live
+  // site silently commits that day's content as the theme's baseline. 'none'
+  // makes a missing baseline a hard failure; the only way to write one is
+  // --update-snapshots, which overrides this and which bin/shakedown.mjs
+  // allows in sandbox mode only.
+  updateSnapshots: 'none',
   // Visual baselines belong to the THEME (committed in its repo), keyed by
   // platform because font rendering differs across OSes — macOS baselines
   // and CI Linux baselines coexist.

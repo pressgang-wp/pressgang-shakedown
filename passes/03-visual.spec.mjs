@@ -11,10 +11,23 @@ import { loadMatrix } from './matrix.mjs';
  * fixtures (seeded values, pinned dates) are what make these stable —
  * a diff should mean the THEME changed, not the content.
  *
- * First run: no baselines exist yet — the whole pass skips with a pointer
- * to `shakedown sandbox --update-snapshots`, so CI isn't red for the wrong
- * reason. `<time>` elements are masked: sample content created by WP core
- * install carries the install date.
+ * Baselines are only ever written on purpose. `playwright.config.mjs` pins
+ * `updateSnapshots: 'none'`, so a route with no baseline FAILS rather than
+ * quietly acquiring one from whatever happened to render — Playwright's
+ * default ('missing') would mint it, fail once, then pass on the retry,
+ * which in attached mode bakes that day's live content into the theme's
+ * committed baselines. Writing requires `--update-snapshots`, which the CLI
+ * permits only in sandbox mode.
+ *
+ * First run: no baselines exist at all — the pass skips with a pointer to
+ * `shakedown sandbox --update-snapshots`, so a theme that hasn't adopted the
+ * visual pass isn't red for a decision it hasn't made. Once ANY baseline
+ * exists the pass is live, and a route missing its own baseline is a real
+ * failure: either it is a new route needing a deliberate baseline, or a
+ * committed one has gone missing.
+ *
+ * `<time>` elements are masked: sample content created by WP core install
+ * carries the install date.
  */
 const matrix = loadMatrix();
 const workspace = process.env.SHAKEDOWN_WORKSPACE ?? process.cwd();
@@ -34,7 +47,10 @@ function snapshotName(route) {
 
 for (const route of matrix.routes.filter((r) => r.expect === 200)) {
   test(`03 ${route.kind} ${route.url}`, async ({ page }) => {
-    test.skip(!hasBaselines && test.info().config.updateSnapshots === 'missing',
+    // 'none' is the configured default, so this reads as "no baselines at all,
+    // and nobody asked us to create any". Passing --update-snapshots overrides
+    // it, which is what lets the very first baseline run get past this skip.
+    test.skip(!hasBaselines && test.info().config.updateSnapshots === 'none',
       'No visual baselines yet — create them with: shakedown sandbox --update-snapshots');
 
     await page.goto(route.url, { waitUntil: 'load' });

@@ -96,7 +96,7 @@ When something fails you get the exact URL, what was expected, and a Playwright 
 
 ## 💡 Good to know
 
-- **Read-only by design.** The passes only ever GET pages — safe to run against any environment you can reach.
+- **Read-only by design.** The passes only ever GET pages — safe to run against any environment you can reach. That extends to your repo: a run never writes visual baselines as a side effect. Creating or updating them takes `npx shakedown sandbox --update-snapshots`, and it's refused outside sandbox mode, because a baseline captured from a live site records that day's content rather than your theme.
 - **Testing a live shared server?** Runs are parallel; a single retry is built in to absorb load transients on one PHP-FPM.
 - **Self-signed `.test` certificates** are already handled (`ignoreHTTPSErrors`).
 - **True story:** on its very first run, Shakedown found a real bug — category archives returning `200` with an empty body. Zero tests written. That's the pitch. 🐛

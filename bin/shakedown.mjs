@@ -29,6 +29,15 @@ const targetFlag = (argv.find((a) => a.startsWith('--target=')) || '').split('='
 const args = argv.filter((a) => !a.startsWith('--target='));
 const command = args[0] ?? 'all';
 
+// Writing visual baselines is a sandbox-only act. Attached mode runs against
+// live content, so a baseline captured there records whatever happened to be
+// published that day — and because singles are sampled newest-first, the very
+// routes it captures drift as the site is edited. Baselines only mean anything
+// when the fixtures behind them are seeded and the epoch is pinned.
+const updatingSnapshots = argv.some(
+  (a) => a === '-u' || a === '--update-snapshots' || a.startsWith('--update-snapshots=')
+);
+
 /**
  * Locate Muster's autoloader for sandbox seeding: explicit config first,
  * then the theme's own composer vendor, then a sibling checkout of the
@@ -100,6 +109,13 @@ function test(extraArgs = []) {
 }
 
 try {
+  if (updatingSnapshots && command !== 'sandbox') {
+    throw new Error(
+      'Visual baselines can only be written in sandbox mode, where fixtures are seeded and dates pinned.\n' +
+      '  Run: npx shakedown sandbox --update-snapshots'
+    );
+  }
+
   const target = resolveTarget(workspace, { target: targetFlag }, { requireBaseUrl: command !== 'sandbox' });
 
   switch (command) {

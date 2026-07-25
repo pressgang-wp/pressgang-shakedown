@@ -114,6 +114,12 @@ theme's `tests/e2e/` journeys all resolve against it.
   Together they make the seeded site byte-identical across runs.
 - Visual baselines live in the **theme** at `tests/__screenshots__/{platform}/`
   and are committed there; regenerate with `npx shakedown sandbox --update-snapshots`.
+- **Baselines are only ever written on purpose.** `updateSnapshots: 'none'` is
+  pinned in `playwright.config.mjs`, so a route with no baseline fails instead of
+  quietly minting one (Playwright's default would write it, fail once, then pass
+  on the retry). `--update-snapshots` is the only way to write, and the CLI
+  rejects it outside sandbox mode — an attached run cannot touch the theme's
+  baselines, which would otherwise capture that day's live content.
 - If a theme's `SiteMuster` has no pinned `defaultEpoch()` (falls back to "now"),
   fixture dates drift and visual baselines will fail daily — pin an epoch (in the
   Muster or `sandbox.epoch`) when relying on the visual pass.
