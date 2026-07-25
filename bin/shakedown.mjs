@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { resolveTarget } from '../lib/target.mjs';
 import { capstanDoctor, deriveMatrix, mergeRoutes } from '../lib/derive.mjs';
+import { activeSuppressions } from '../lib/suppress.mjs';
 import { bootSandbox, DEFAULT_FIXTURE_EPOCH, seedAcfStates, seedJourneySetups, seedThemeMuster } from '../lib/sandbox.mjs';
 
 const pkgRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -82,8 +83,19 @@ function preflight(sitePath) {
 
 /** Derive and persist the matrix, printing a summary. */
 function matrix(target) {
-  const { matrix: m, source } = deriveMatrix(target, workspace);
+  const { matrix: m, source, ignored } = deriveMatrix(target, workspace);
   console.log(`⚓ ${m.routes.length} routes for ${target.baseUrl} (via ${source})`);
+
+  // Suppression is never silent: what a run declines to check is stated up
+  // front, here and in the trial report, so a shrinking suite can't pass for
+  // a healthy one.
+  if (ignored > 0) {
+    console.log(`⚓ ${ignored} route(s) skipped by ignore.routes`);
+  }
+
+  for (const { key, patterns } of activeSuppressions(target.ignore)) {
+    console.log(`⚓ suppressing ${patterns.length} ${key} pattern(s): ${patterns.join(', ')}`);
+  }
 
   return m;
 }

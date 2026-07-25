@@ -43,6 +43,42 @@ Optional `shakedown.config.json` in the theme, for overrides only:
 }
 ```
 
+### 🔇 Suppressing what isn't yours
+
+The passes are strict on purpose — zero console errors, zero PHP notices, no
+serious axe violations. On a real site some of that noise belongs to somebody
+else: a tag manager logging to the console, a deprecation raised inside ACF on a
+newer PHP, a contrast rule your palette loses deliberately. An `ignore` block
+records what's already been judged, so you don't have to choose between the
+noise and switching a whole pass off:
+
+```json
+{
+  "ignore": {
+    "routes":        ["/private-area", "/wp-json/"],
+    "consoleErrors": ["googletagmanager", "ERR_BLOCKED_BY_CLIENT"],
+    "requests":      ["/wp-json/"],
+    "phpIssues":     ["wp-content/plugins/advanced-custom-fields-pro/"],
+    "a11yRules":     ["color-contrast"]
+  }
+}
+```
+
+Patterns are plain **substrings**, case-sensitive — not regex, not globs. Paste
+the text out of a failure message and it's the pattern that silences it.
+`a11yRules` is the exception: exact axe rule IDs, handed to axe's own
+`disableRules()`.
+
+`phpIssues` matches the whole signature — `<message> in <path>:<line>`, path
+relative to the WordPress root — so a pattern can name an **origin**
+(`wp-content/plugins/…/`) just as easily as a message. Filtering happens inside
+the observer, so the count a route reports is what's genuinely outstanding.
+
+**Nothing is suppressed quietly.** Every active pattern is printed when the
+matrix is derived, ignored routes are counted, and the Trial Report ends with a
+*Suppressed by configuration* table — a clean run can be read for what it is. A
+mistyped key (`consoleError`) is an error rather than a silent no-op.
+
 Authored journeys (form submissions, checkout flows) live in your theme's `tests/e2e/` — when present they run alongside the derived passes as the `journeys` project.
 
 **Seeding is convention-first.** If your theme ships [Muster](https://github.com/pressgang-wp/pressgang-muster) seeders (a top-level `muster/` directory), the sandbox runs them via `wp capstan seed` as the baseline — your real menus, terms and pages — then layers the derived populated/minimal ACF state fixtures on top. A theme that ships no seeders is unaffected: the derived layer covers it on its own, so it does a good job out of the box.

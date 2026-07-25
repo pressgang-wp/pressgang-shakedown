@@ -34,6 +34,13 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
 - **Config-derived, never hand-written.** The route matrix, the fixtures, and the
   checks all come from the theme's own declarations — never a bespoke spec file
   or a database dump.
+- **Suppression is declared and disclosed, never silent.** The strict gates need
+  an escape hatch or they get switched off wholesale, so `ignore` in
+  `shakedown.config.json` records findings already judged as not the theme's
+  (`lib/suppress.mjs`). It declares no checks and invents no routes — it narrows
+  existing ones. Every pattern is echoed at derive time and tabled in the trial
+  report; a mistyped key throws rather than silently suppressing nothing. Never
+  add a gate without a way to narrow it, and never narrow one without saying so.
 - **Deterministic.** A fixed seed and epoch make fixtures byte-stable, so a visual
   snapshot diff means the *theme* changed, not the content. Never introduce
   ambient time or unseeded randomness into a fixture path.
@@ -154,6 +161,7 @@ GitHub Release (`.github/workflows/publish.yml`) — no stored token, no OTP.
 - `lib/derive.mjs` — matrix derivation, Capstan oracle/doctor, route merge
 - `lib/target.mjs` — target/config resolution
 - `passes/00`–`03`, `passes/matrix.mjs` — the passes and their route source
+- `lib/suppress.mjs` — the `ignore` policy: matching, validation, disclosure
 - `tests/unit/` — this repo's own unit tests (never published)
 - `php/observer.php`, `bin/seed-states.php` — the in-WordPress helpers
 - `playwright.config.mjs`, `README.md`

@@ -58,9 +58,15 @@ for (const route of matrix.routes) {
 
     // PHP issues are counted by the observer even when display/log are off —
     // a page can look perfect and still be raising notices on every request.
+    // The count already excludes anything matched by ignore.phpIssues, and the
+    // sampled signatures are quoted verbatim so one can be pasted straight into
+    // that list (they carry the path relative to the install root).
     if (headers['x-shakedown-php-issues'] !== undefined) {
       const sample = decodeURIComponent(headers['x-shakedown-php-sample'] ?? '');
-      expect(Number(headers['x-shakedown-php-issues']), `PHP notices/warnings on ${route.url}: ${sample}`).toBe(0);
+      expect(
+        Number(headers['x-shakedown-php-issues']),
+        `PHP notices/warnings on ${route.url} (suppress via ignore.phpIssues): ${sample}`
+      ).toBe(0);
     }
   });
 }

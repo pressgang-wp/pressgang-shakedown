@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { loadMatrix } from './matrix.mjs';
+import { ignoresFor } from '../lib/suppress.mjs';
 
 /**
  * Pass 02 — accessibility.
@@ -11,8 +12,15 @@ import { loadMatrix } from './matrix.mjs';
  * `serious` and `critical` violations fail the route; `moderate` and `minor`
  * are reported to the console but do not fail — promote them once the
  * serious/critical set is clean.
+ *
+ * `ignore.a11yRules` disables named rules outright, via axe's own
+ * disableRules(). These are exact rule IDs, not substrings, and the intended
+ * use is a rule the design has knowingly accepted (a brand palette that loses
+ * `color-contrast` on one element) rather than a backlog of unfixed ones —
+ * the trial report discloses every rule disabled.
  */
 const matrix = loadMatrix();
+const disabledRules = ignoresFor(matrix, 'a11yRules');
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const FAILING_IMPACTS = ['serious', 'critical'];
@@ -33,10 +41,13 @@ for (const route of matrix.routes.filter((r) => r.expect === 200)) {
 
     // Iframe contents are excluded: violations inside third-party embeds
     // (YouTube player chrome etc.) are not the site's remediation surface.
-    const results = await new AxeBuilder({ page })
-      .withTags(WCAG_TAGS)
-      .exclude('iframe')
-      .analyze();
+    const axe = new AxeBuilder({ page }).withTags(WCAG_TAGS).exclude('iframe');
+
+    if (disabledRules.length > 0) {
+      axe.disableRules(disabledRules);
+    }
+
+    const results = await axe.analyze();
 
     const failing = results.violations.filter((v) => FAILING_IMPACTS.includes(v.impact ?? ''));
     const advisory = results.violations.filter((v) => !FAILING_IMPACTS.includes(v.impact ?? ''));
