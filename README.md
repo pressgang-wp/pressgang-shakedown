@@ -128,8 +128,15 @@ Add a post type to your theme's `config/custom-post-types.php` and the next run 
 
 | Pass | Speed | Checks |
 | --- | --- | --- |
-| **00 · Availability** | ~seconds (HTTP only) | Every route returns its intended status · no PHP/Twig error signatures in the body · a `<title>` is present. The 404 probe accepts a 404 *or* a redirect-away (Redirection-plugin catch-alls are fine). |
+| **00 · Availability** | ~seconds (HTTP only) | Every route returns its intended status · no PHP/Twig error signatures in the body · a `<title>` is present. The 404 probe accepts a 404 *or* a redirect-away (Redirection-plugin catch-alls are fine). In a sandbox, also the **oracle** — each URL rendered via its intended template and controller, catching silent fallbacks to `index.php` — and a count of **PHP notices** raised, which a page can be doing on every request while looking perfect. |
 | **01 · Integrity** | ~seconds–minutes (real Chromium) | No JS exceptions · no console errors · no failed same-origin requests · no broken images. |
+| **02 · Accessibility** | ~seconds–minutes (axe-core) | WCAG 2.1 A/AA. `serious` and `critical` fail the route; `moderate` and `minor` are reported but don't (promote them once the top tier is clean). |
+| **03 · Visual** | ~minutes | Full-page snapshots against per-platform baselines committed in your theme. Deterministic fixtures are what make these stable — see below. |
+
+Theme **journeys** in `tests/e2e/` run alongside as a separate project. A
+**Trial Report** — client-readable HTML, route × pass, with screenshots and
+plain-English failures — lands at `.shakedown/trial-report.html`, alongside
+`run.json` for anything that wants to consume a run.
 
 Useful variations:
 
@@ -170,11 +177,18 @@ jobs:
 ```
 
 Inputs (all optional): `theme` (defaults to the repo name), `php-version`,
-`wp-version`, `node-version`, and `muster-ref`. The workflow pins `muster-ref` to
-the exact fixture engine revision it was verified against; override it only as
-an intentional compatibility test. The Playwright HTML report and route matrix
-upload as artifacts on every run. Suits theme-shaped repos; site-shaped repos
-work too once their theme path is passed as `theme`. 🧪
+`wp-version`, `node-version`, and `muster-ref`.
+
+**Versions are pinned, not floating.** `wp-version` and `muster-ref` are exact —
+as is the SQLite drop-in, whose archive is checksum-verified on download. A
+visual diff is supposed to mean your theme changed, and `latest` anywhere in that
+stack meant an upstream release could rebreak every baseline on its release day.
+Bump them deliberately, or pass `latest` explicitly to test forward
+compatibility on purpose.
+
+The Playwright HTML report, the Trial Report and the route matrix upload as
+artifacts on every run. Suits theme-shaped repos; site-shaped repos work too once
+their theme path is passed as `theme`. 🧪
 
 ## ⚓ The PressGang fleet
 
@@ -183,17 +197,25 @@ Shakedown is part of the [PressGang](https://pressgang.dev) ecosystem and is des
 | Package | Role |
 | --- | --- |
 | [pressgang](https://github.com/pressgang-wp/pressgang) | The parent theme framework (Timber + Twig, config-driven) |
-| [capstan](https://github.com/pressgang-wp/pressgang-capstan) | WP-CLI scaffolding & introspection — future source of the route matrix and per-URL controller/template oracle |
+| [capstan](https://github.com/pressgang-wp/pressgang-capstan) | WP-CLI scaffolding & introspection — when installed, it's the source of the route matrix and the per-URL controller/template oracle |
 | [muster](https://github.com/pressgang-wp/pressgang-muster) | Runs the theme's own seeders as the sandbox baseline, and seeds deterministic populated/minimal ACF states on top |
 | [bosun](https://github.com/pressgang-wp/pressgang-bosun) | AI-agent guidelines & skills — future distribution channel for Shakedown's QA skills |
 
 ## 🛠️ Roadmap
 
-- `wp capstan matrix --format=json` + **oracle assertions** — assert each URL rendered via its *intended* controller and Twig template, catching silent fallbacks to `index.php`
-- **Observer mu-plugin** — PHP notice capture and render telemetry (template/snippet coverage)
-- More passes: **accessibility** (axe-core), **visual snapshots**
-- **Trial Report** — a client-readable HTML report with screenshots and coverage
-- Engines: self-booting **WordPress Playground**, per-PR **InstaWP** CI sites, **wp-env** fidelity lane
+Shipped since the first cut: the Capstan-sourced matrix and **oracle assertions**,
+the **observer** mu-plugin (PHP notice capture and render telemetry), the
+**accessibility** and **visual** passes, and the **Trial Report**.
+
+Still ahead:
+
+- **Render telemetry** — which Twig templates and snippets a run actually
+  exercised, so coverage is measurable rather than assumed
+- More engines: self-booting **WordPress Playground**, per-PR **InstaWP** CI
+  sites, a **wp-env** fidelity lane
+- Journeys in the Trial Report — authored `tests/e2e/` results are currently
+  counted but not detailed there
+- Wider matrix families: attachment pages, deeper pagination, multi-page posts
 
 ## 📋 Requirements
 
