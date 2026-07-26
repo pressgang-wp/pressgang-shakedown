@@ -65,6 +65,17 @@ test('ignoresFor() tolerates a matrix written before the policy existed', () => 
   assert.deepEqual(ignoresFor({ ignore: { routes: 'oops' } }, 'routes'), []);
 });
 
+test('every documented ignore key is a real category', () => {
+  // IGNORE_KEYS is the single source of truth: normaliseIgnore() accepts exactly
+  // these, the trial report describes them from the same map, and anything else
+  // throws. A key added to one and not the other would suppress nothing.
+  for (const key of Object.keys(IGNORE_KEYS)) {
+    assert.deepEqual(normaliseIgnore({ [key]: ['x'] })[key], ['x']);
+    assert.equal(typeof IGNORE_KEYS[key], 'string');
+  }
+  assert.ok(Object.keys(IGNORE_KEYS).includes('errorSignatures'));
+});
+
 test('activeSuppressions() reports only non-empty categories, for disclosure', () => {
   assert.deepEqual(activeSuppressions(normaliseIgnore({})), []);
   assert.deepEqual(

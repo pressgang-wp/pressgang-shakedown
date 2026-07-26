@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { loadMatrix, controllerHeaderName, ERROR_SIGNATURES } from './matrix.mjs';
+import { ignoresFor, suppressed } from '../lib/suppress.mjs';
 
 /**
  * Pass 00 — availability.
@@ -20,6 +21,7 @@ const REDIRECT_STATUSES = [301, 302, 303, 307, 308];
  * Attached runs never do, so the oracle and PHP-issue checks stay optional there.
  */
 const expectsObserver = matrix.target === 'sandbox';
+const ignoredSignatures = ignoresFor(matrix, 'errorSignatures');
 
 for (const route of matrix.routes) {
   test(`00 ${route.kind} ${route.url}`, async ({ request }) => {
@@ -41,8 +43,15 @@ for (const route of matrix.routes) {
 
     // Collect-then-assert so a failure names the signatures found instead of
     // dumping the page body into the report.
-    const found = ERROR_SIGNATURES.filter((sig) => body.includes(sig));
-    expect(found, `PHP/Twig error signatures in ${route.url}`).toEqual([]);
+    //
+    // The signature scan is a blunt instrument by design — a page whose CONTENT
+    // legitimately reads "Warning: " trips it. `ignore.errorSignatures` matches
+    // "<signature> on <url>", so a pattern can name the page (the usual case:
+    // one article about warnings), the signature, or both.
+    const found = ERROR_SIGNATURES.filter(
+      (sig) => body.includes(sig) && !suppressed(ignoredSignatures, `${sig} on ${route.url}`)
+    );
+    expect(found, `PHP/Twig error signatures in ${route.url} (suppress via ignore.errorSignatures)`).toEqual([]);
 
     if (route.expect === 200) {
       expect(body, `missing <title> on ${route.url}`).toMatch(/<title>[^<]+<\/title>/i);

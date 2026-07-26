@@ -112,6 +112,11 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
   request, for the oracle assertions and notice capture.
 - **Trial report** (`lib/trial-reporter.mjs`)
   A self-contained, client-readable HTML summary at `.shakedown/trial-report.html`.
+  It reports what happened, not the tidiest reading of it: flaky routes are called
+  flaky (with the first failure), suppressions are tabled, a failing journey stops
+  the all-clear even though journeys aren't detailed, a failing visual route shows
+  what actually rendered rather than the baseline it didn't match, and a run that
+  checked nothing says so instead of leaving the last one looking current.
 
 ---
 

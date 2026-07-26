@@ -59,6 +59,7 @@ noise and switching a whole pass off:
     "consoleErrors": ["googletagmanager", "ERR_BLOCKED_BY_CLIENT"],
     "requests":      ["/wp-json/"],
     "phpIssues":     ["wp-content/plugins/advanced-custom-fields-pro/"],
+    "errorSignatures": ["on https://mysite.test/alerts/"],
     "a11yRules":     ["color-contrast"]
   }
 }
@@ -73,6 +74,10 @@ the text out of a failure message and it's the pattern that silences it.
 relative to the WordPress root — so a pattern can name an **origin**
 (`wp-content/plugins/…/`) just as easily as a message. Filtering happens inside
 the observer, so the count a route reports is what's genuinely outstanding.
+
+`errorSignatures` is for the one page whose *content* legitimately reads
+"Warning: ". It matches `<signature> on <url>`, so naming the URL suppresses the
+scan just for that page rather than everywhere.
 
 **Nothing is suppressed quietly.** Every active pattern is printed when the
 matrix is derived, ignored routes are counted, and the Trial Report ends with a
@@ -195,7 +200,7 @@ their theme path is passed as `theme`. 🧪
 Shakedown is part of the [PressGang](https://pressgang.dev) ecosystem and is designed to compose with its shipmates:
 
 | Package | Role |
-| --- | --- |
+| ------- | ---- |
 | [pressgang](https://github.com/pressgang-wp/pressgang) | The parent theme framework (Timber + Twig, config-driven) |
 | [capstan](https://github.com/pressgang-wp/pressgang-capstan) | WP-CLI scaffolding & introspection — when installed, it's the source of the route matrix and the per-URL controller/template oracle |
 | [muster](https://github.com/pressgang-wp/pressgang-muster) | Runs the theme's own seeders as the sandbox baseline, and seeds deterministic populated/minimal ACF states on top |
