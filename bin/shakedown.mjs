@@ -83,8 +83,9 @@ function preflight(sitePath) {
 
 /** Derive and persist the matrix, printing a summary. */
 function matrix(target) {
-  const { matrix: m, source, ignored } = deriveMatrix(target, workspace);
-  console.log(`⚓ ${m.routes.length} routes for ${target.baseUrl} (via ${source})`);
+  const { matrix: m, source, ignored, supplemented } = deriveMatrix(target, workspace);
+  const via = supplemented > 0 ? `${source} + ${supplemented} supplementary` : source;
+  console.log(`⚓ ${m.routes.length} routes for ${target.baseUrl} (via ${via})`);
 
   // Suppression is never silent: what a run declines to check is stated up
   // front, here and in the trial report, so a shrinking suite can't pass for

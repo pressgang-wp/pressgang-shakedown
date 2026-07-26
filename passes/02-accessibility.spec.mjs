@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { loadMatrix } from './matrix.mjs';
+import { browsableRoutes, loadMatrix } from './matrix.mjs';
 import { ignoresFor } from '../lib/suppress.mjs';
 
 /**
@@ -35,7 +35,7 @@ function describeViolation(v) {
   return `[${v.impact}] ${v.id} × ${v.nodes.length} — ${v.helpUrl}`;
 }
 
-for (const route of matrix.routes.filter((r) => r.expect === 200)) {
+for (const route of browsableRoutes(matrix)) {
   test(`02 ${route.kind} ${route.url}`, async ({ page }) => {
     await page.goto(route.url, { waitUntil: 'load' });
 

@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, expect } from '@playwright/test';
-import { loadMatrix } from './matrix.mjs';
+import { browsableRoutes, loadMatrix } from './matrix.mjs';
 
 /**
  * Pass 03 — visual regression.
@@ -45,7 +45,7 @@ function snapshotName(route) {
   return `${route.kind.replace(/\W+/g, '-')}--${path}.png`;
 }
 
-for (const route of matrix.routes.filter((r) => r.expect === 200)) {
+for (const route of browsableRoutes(matrix)) {
   test(`03 ${route.kind} ${route.url}`, async ({ page }) => {
     // 'none' is the configured default, so this reads as "no baselines at all,
     // and nobody asked us to create any". Passing --update-snapshots overrides

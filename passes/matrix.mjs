@@ -5,6 +5,8 @@ import { readFileSync } from 'node:fs';
  * @property {string} url Absolute URL to test.
  * @property {string} kind `family:detail` label, e.g. `archive:event`.
  * @property {number} expect Intended HTTP status (200, or 404 for the probe).
+ * @property {boolean} [html] False for routes that aren't HTML (feeds) — pass 00
+ *     still checks them, the browser passes skip them.
  * @property {string} [template] Oracle (capstan --resolve): basename of the PHP template WP should choose.
  * @property {string|null} [controller] Oracle: FQCN of the controller that should render (dispatched routes only).
  */
@@ -31,6 +33,20 @@ export function loadMatrix() {
   } catch {
     throw new Error('No matrix found. Run `shakedown matrix` (or `npm run matrix`) first.');
   }
+}
+
+/**
+ * The routes a browser should actually open: successful ones that render HTML.
+ *
+ * Feeds are in the matrix (a feed that fatals is worth catching) but are XML, so
+ * running axe or a full-page snapshot over one measures nothing and would only
+ * add a baseline to maintain.
+ *
+ * @param {Matrix} matrix
+ * @returns {Route[]}
+ */
+export function browsableRoutes(matrix) {
+  return matrix.routes.filter((route) => route.expect === 200 && route.html !== false);
 }
 
 /**

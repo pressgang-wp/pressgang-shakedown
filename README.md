@@ -105,8 +105,22 @@ timezone-qualified ISO 8601 datetime.
 | Every public taxonomy | sample term pages |
 | Page templates | every published page using one |
 | Menus | every internal menu target |
-| Search | `/?s=…` |
+| Authors | archives for authors with published posts (`author.php`) |
+| Dates | year and month archives of the newest post (`date.php`) |
+| Pagination | page 2 of any archive with more posts than fit |
+| Feeds | the main feed and per-post-type feeds |
+| Search | `/?s=…`, plus a term that matches **nothing** |
 | Unknown URLs | a 404 probe |
+
+Author and date archives are templates most themes ship and nothing was ever
+opening; pagination is where off-by-one and empty-page bugs live; and the
+no-results search exercises a branch the configured `searchTerm` never reaches.
+Feeds are checked by pass 00 only — a feed that fatals matters, but running axe
+or a visual snapshot over XML measures nothing.
+
+Page 2 is only emitted when a post type has more published posts than
+`posts_per_page`. A theme that *raises* that for a particular archive can drop
+the route with `ignore.routes` (below).
 
 Add a post type to your theme's `config/custom-post-types.php` and the next run covers it automatically. The matrix is the map; the passes are the inspection. 🔦
 

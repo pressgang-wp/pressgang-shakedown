@@ -73,6 +73,13 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
   menu targets, a search probe, and a 404 probe. From `wp capstan matrix
   --resolve` (with the controller/template **oracle**) when Capstan is present,
   or a bundled fallback when it is not.
+  **Supplementary families** (`bin/matrix-supplement.php`) add author and date
+  archives, page 2, feeds, and an empty search. They live in their own script and
+  are merged into whichever source produced the base matrix, because only the
+  ORACLE should differ between Capstan and the fallback — never the coverage. Base
+  routes win a URL collision (their labels are more specific), `ignore.routes`
+  applies after the merge, and a route marked `html: false` (feeds) is checked by
+  pass 00 but skipped by the browser passes via `browsableRoutes()`.
 - **Sandbox** (`lib/sandbox.mjs`)
   A throwaway WordPress in a temp dir: core/theme/plugins symlinked **read-only**,
   its own SQLite database and uploads, WordPress install defaults cleared, then
@@ -179,6 +186,7 @@ GitHub Release (`.github/workflows/publish.yml`) — no stored token, no OTP.
 - `passes/00`–`03`, `passes/matrix.mjs` — the passes and their route source
 - `lib/suppress.mjs` — the `ignore` policy: matching, validation, disclosure
 - `tests/unit/` — this repo's own unit tests (never published)
+- `bin/matrix.php`, `bin/matrix-supplement.php` — the derived route families
 - `php/observer.php`, `bin/seed-states.php` — the in-WordPress helpers
 - `playwright.config.mjs`, `README.md`
 

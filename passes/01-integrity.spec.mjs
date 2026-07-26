@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loadMatrix } from './matrix.mjs';
+import { browsableRoutes, loadMatrix } from './matrix.mjs';
 import { ignoresFor, suppressed } from '../lib/suppress.mjs';
 
 /**
@@ -21,7 +21,7 @@ const origin = new URL(matrix.baseUrl).origin;
 const ignoredConsole = ignoresFor(matrix, 'consoleErrors');
 const ignoredRequests = ignoresFor(matrix, 'requests');
 
-for (const route of matrix.routes.filter((r) => r.expect === 200)) {
+for (const route of browsableRoutes(matrix)) {
   test(`01 ${route.kind} ${route.url}`, async ({ page }) => {
     const pageErrors = [];
     const consoleErrors = [];
