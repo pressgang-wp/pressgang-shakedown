@@ -35,6 +35,32 @@ $GLOBALS['shakedown_observer'] = [ 'issues' => [], 'template' => '', 'controller
 $shakedown_ignore = json_decode( (string) getenv( 'SHAKEDOWN_IGNORE_PHP' ), true );
 $shakedown_ignore = is_array( $shakedown_ignore ) ? $shakedown_ignore : [];
 
+/**
+ * Reduce a file path to its portable, WordPress-relative tail.
+ *
+ * Themes, plugins and core directories are SYMLINKED into the sandbox and PHP
+ * reports realpaths, so most files resolve to the real project location rather
+ * than anywhere under ABSPATH — stripping ABSPATH alone leaves an absolute path
+ * containing somebody's home directory. An ignore.phpIssues pattern has to be
+ * committable and work on the next machine, so keep the recognisable tail.
+ *
+ * @param string $file
+ * @return string
+ */
+function shakedown_observer_relative_path( string $file ): string {
+	$relative = str_replace( ABSPATH, '', $file );
+
+	foreach ( [ '/wp-content/', '/wp-includes/', '/wp-admin/' ] as $marker ) {
+		$at = strrpos( $relative, $marker );
+
+		if ( false !== $at ) {
+			return ltrim( substr( $relative, $at ), '/' );
+		}
+	}
+
+	return $relative;
+}
+
 set_error_handler( static function ( int $errno, string $errstr, string $errfile = '', int $errline = 0 ) use ( $shakedown_ignore ): bool {
 	$tracked = E_NOTICE | E_WARNING | E_DEPRECATED | E_USER_NOTICE | E_USER_WARNING | E_USER_DEPRECATED;
 
@@ -42,11 +68,11 @@ set_error_handler( static function ( int $errno, string $errstr, string $errfile
 		return false;
 	}
 
-	// Path relative to the install root, so a pattern can name an ORIGIN
+	// WordPress-relative path, so a pattern can name an ORIGIN
 	// ("wp-content/plugins/advanced-custom-fields-pro/") as easily as a
 	// message. The old basename-only signature made that impossible: every
 	// plugin's deprecations arrived indistinguishable from the theme's own.
-	$signature = sprintf( '%s in %s:%d', $errstr, str_replace( ABSPATH, '', $errfile ), $errline );
+	$signature = sprintf( '%s in %s:%d', $errstr, shakedown_observer_relative_path( $errfile ), $errline );
 
 	foreach ( $shakedown_ignore as $pattern ) {
 		if ( is_string( $pattern ) && $pattern !== '' && str_contains( $signature, $pattern ) ) {
@@ -80,18 +106,53 @@ add_action( 'all', static function (): void {
 	}
 } );
 
-register_shutdown_function( static function (): void {
+/**
+ * Emit the observation headers.
+ *
+ * Has to run while the ob_start() buffer above still holds the body: under
+ * `php -S` output_buffering is off, so the first echo would otherwise commit the
+ * response and headers_sent() would be true for good.
+ */
+function shakedown_observer_send_headers(): void {
+	if ( headers_sent() ) {
+		return;
+	}
+
 	$observer = $GLOBALS['shakedown_observer'];
 
-	if ( ! headers_sent() ) {
-		header( 'X-Shakedown-Template: ' . $observer['template'] );
-		header( 'X-Shakedown-Controller: ' . $observer['controller'] );
-		header( 'X-Shakedown-Php-Issues: ' . count( $observer['issues'] ) );
+	header( 'X-Shakedown-Template: ' . $observer['template'] );
+	header( 'X-Shakedown-Controller: ' . $observer['controller'] );
+	header( 'X-Shakedown-Php-Issues: ' . count( $observer['issues'] ) );
 
-		if ( $observer['issues'] !== [] ) {
-			header( 'X-Shakedown-Php-Sample: ' . substr( rawurlencode( implode( ' | ', array_slice( $observer['issues'], 0, 3 ) ) ), 0, 900 ) );
-		}
+	if ( $observer['issues'] !== [] ) {
+		header( 'X-Shakedown-Php-Sample: ' . substr( rawurlencode( implode( ' | ', array_slice( $observer['issues'], 0, 3 ) ) ), 0, 900 ) );
 	}
+}
+
+/*
+ * Priority 0 puts this AHEAD of wp_ob_end_flush_all (hooked to `shutdown` at
+ * priority 1), which is what flushes our buffer and commits the response.
+ *
+ * This used to be a plain register_shutdown_function(), which could never work:
+ * WordPress registers its own shutdown handler at wp-settings.php:166, while
+ * mu-plugins do not load until :498, so WP's always ran first, flushed every
+ * buffer, and left headers_sent() true — every header() call here was skipped
+ * and the template/controller oracle and PHP-issue assertions in pass 00
+ * silently became no-ops that reported success.
+ *
+ * Everything raised during rendering is therefore counted. Issues raised LATER
+ * — by shutdown callbacks at priority 1 or beyond — are not, which is the
+ * honest cost of having to commit headers before the body goes out.
+ */
+add_action( 'shutdown', 'shakedown_observer_send_headers', 0 );
+
+/*
+ * Fallback for any path where the `shutdown` ACTION never fires (a hard exit
+ * before WordPress finishes booting, say): still try the headers, and still
+ * flush, so a buffered response is never simply lost.
+ */
+register_shutdown_function( static function (): void {
+	shakedown_observer_send_headers();
 
 	while ( ob_get_level() > 0 ) {
 		ob_end_flush();

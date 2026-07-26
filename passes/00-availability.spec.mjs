@@ -15,6 +15,12 @@ const matrix = loadMatrix();
 /** Redirect statuses that count as "handled" for the unknown-URL probe. */
 const REDIRECT_STATUSES = [301, 302, 303, 307, 308];
 
+/**
+ * Sandbox runs always install the observer, so its headers must be present.
+ * Attached runs never do, so the oracle and PHP-issue checks stay optional there.
+ */
+const expectsObserver = matrix.target === 'sandbox';
+
 for (const route of matrix.routes) {
   test(`00 ${route.kind} ${route.url}`, async ({ request }) => {
     if (route.expect === 404) {
@@ -45,6 +51,17 @@ for (const route of matrix.routes) {
     // Oracle assertions — active when the observer answered (sandbox) and
     // the matrix carries capstan --resolve expectations for this route.
     const headers = res.headers();
+
+    // Every check below is guarded on its header existing, so an observer that
+    // stops answering turns them all into no-ops that report success — which is
+    // exactly what happened for as long as its headers were being dropped. In a
+    // sandbox the observer is always installed, so its silence is a failure.
+    if (expectsObserver) {
+      expect(
+        headers['x-shakedown-php-issues'],
+        `observer did not answer on ${route.url} — the oracle and PHP-issue checks below cannot run`
+      ).toBeDefined();
+    }
 
     if (route.template && headers['x-shakedown-template']) {
       expect(headers['x-shakedown-template'], `template oracle for ${route.url}`).toBe(route.template);
