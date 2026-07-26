@@ -78,11 +78,14 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
   its own SQLite database and uploads, WordPress install defaults cleared, then
   seeded, served by `wp server`, isolation-proven, and deleted after the run.
   Boot acquires two things — the temp tree and the server — and a single
-  `destroy()` releases both, on the failure path and as the returned `stop()`.
-  The server is spawned `detached: true` and killed by **process group**
-  (`process.kill(-pid)`) because `wp server` launches `php -S` as a child:
-  signalling `wp` alone leaves the built-in server holding its port. Don't
-  "tidy" either of those away — teardown stops working silently.
+  `destroy()` releases both, on the failure path, as the returned `stop()`, and
+  from a `SIGINT`/`SIGTERM` handler (signals bypass `try`/`finally`, so Ctrl-C
+  would otherwise leak both). The server is spawned `detached: true` and killed
+  by **process group** (`process.kill(-pid)`) because `wp server` launches
+  `php -S` as a child: signalling `wp` alone leaves the built-in server holding
+  its port. `destroy()` also deregisters the handlers, so repeated boots don't
+  stack listeners. Don't "tidy" any of that away — teardown stops working
+  silently.
 - **Seeding layers** (sandbox only, in order)
   1. **Theme baseline** — the theme's own Muster via `wp capstan seed`
      (`seedThemeMuster`), when the theme ships `muster/` seeders.
