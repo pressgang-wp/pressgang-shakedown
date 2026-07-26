@@ -139,6 +139,13 @@ theme's `tests/e2e/` journeys all resolve against it.
 - If a theme's `SiteMuster` has no pinned `defaultEpoch()` (falls back to "now"),
   fixture dates drift and visual baselines will fail daily — pin an epoch (in the
   Muster or `sandbox.epoch`) when relying on the visual pass.
+- **Everything under a baseline is pinned, not floating.** The SQLite drop-in
+  (`SQLITE_PLUGIN_VERSION` + `SQLITE_PLUGIN_SHA256` in `lib/sandbox.mjs`, archive
+  verified on download) and WordPress core (`wp-version` in the CI workflow) are
+  exact versions, alongside `muster-ref`. `latest-stable` and `latest` meant an
+  upstream release could change rendering, or break boot, with no change on our
+  side — ambient variation sitting underneath every visual baseline. Bump the
+  version and its checksum together, deliberately.
 
 ---
 

@@ -30,9 +30,14 @@ on:
         type: string
         default: '8.3'
       wp-version:
-        description: WordPress core version to test against.
+        description: >
+          WordPress core version to test against. PINNED, not 'latest': core
+          markup changes between releases, so 'latest' silently rebroke every
+          visual baseline on WordPress release day — a diff is supposed to mean
+          the theme changed. Bump deliberately, as with muster-ref. Pass 'latest'
+          explicitly to test forward compatibility on purpose.
         type: string
-        default: 'latest'
+        default: '7.0.2'
       node-version:
         type: string
         default: '20'
