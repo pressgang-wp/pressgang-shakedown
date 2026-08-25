@@ -51,6 +51,9 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
   only input; the sandbox brings its own SQLite database and uploads.
 - **Node ESM (`.mjs`).** Keep the runner in JS; reach for PHP only when the code
   must execute inside a booted WordPress.
+- **Static analysis stays in Composer.** PressGang themes may provide
+  `composer check` as `test:compat` plus `phpstan`; Shakedown must not run,
+  configure, or wrap PHPStan.
 - **`passes/` is the product; `tests/` is ours.** The shipped checks live in
   `passes/` (published, run against the consumer's site). This repo's own unit
   tests live in `tests/unit/` and are never published. Never put a unit test in
@@ -169,6 +172,11 @@ core is downloaded bare and the theme's `composer.json` provisions the parent
 theme and plugins. The package publishes to npm via OIDC Trusted Publishing on a
 GitHub Release (`.github/workflows/publish.yml`) — no stored token, no OTP.
 
+Theme static checks should remain separate CI steps or jobs:
+`composer test:compat`, `composer phpstan`, or the local convenience alias
+`composer check`. Shakedown owns runtime/browser evidence; Composer owns static
+PHP evidence.
+
 ---
 
 ## Non-Goals
@@ -179,6 +187,7 @@ GitHub Release (`.github/workflows/publish.yml`) — no stored token, no OTP.
 - **Not framework-locked.** The derived passes are WordPress-generic; PressGang is
   where the deeper introspection (Capstan oracle, config-derived matrix) lives.
 - **Never writes to a real database.** Only the isolation-proven sandbox writes.
+- **Not a PHPStan runner.** Do not fold static type analysis into Shakedown.
 
 ---
 

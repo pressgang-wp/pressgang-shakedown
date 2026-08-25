@@ -95,6 +95,11 @@ timezone-qualified ISO 8601 datetime.
 
 **Introspection:** when [Capstan](https://github.com/pressgang-wp/pressgang-capstan) is installed (`wp package install pressgang-wp/pressgang-capstan`), the matrix comes from `wp capstan matrix --resolve` — including each route's expected template and controller. Without it, a bundled fallback derives the same routes minus the oracle data.
 
+**Static analysis stays in Composer.** PressGang themes should run
+`composer check` when they provide it; that local alias is `test:compat` plus
+`phpstan`. Shakedown does not run or configure PHPStan — it proves runtime and
+browser behaviour after the static PHP checks have passed.
+
 **Central mode** (many sites from one clone): a `shakedown.config.json` with a `targets` map lets one checkout drive any registered site — `npx shakedown --target=mysite`.
 
 ---
@@ -169,6 +174,11 @@ When something fails you get the exact URL, what was expected, and a Playwright 
 
 A reusable GitHub Actions workflow runs the full sandbox suite on every push — no MySQL, no Docker, no site bundle. The theme repo is the only input: WordPress core is downloaded bare, your `composer.json`'s installer-paths provision the parent theme and plugins, and the sandbox brings its own SQLite database and ACF state fixtures.
 
+Keep static PHP checks as separate CI jobs or steps before/alongside Shakedown:
+`composer test:compat`, `composer phpstan`, or the local convenience alias
+`composer check`. Shakedown's reusable workflow intentionally remains the
+browser/runtime gate so Actions can show which layer failed.
+
 In your theme repo, `.github/workflows/shakedown.yml`:
 
 ```yaml
@@ -204,7 +214,7 @@ Shakedown is part of the [PressGang](https://pressgang.dev) ecosystem and is des
 | [pressgang](https://github.com/pressgang-wp/pressgang) | The parent theme framework (Timber + Twig, config-driven) |
 | [capstan](https://github.com/pressgang-wp/pressgang-capstan) | WP-CLI scaffolding & introspection — when installed, it's the source of the route matrix and the per-URL controller/template oracle |
 | [muster](https://github.com/pressgang-wp/pressgang-muster) | Runs the theme's own seeders as the sandbox baseline, and seeds deterministic populated/minimal ACF states on top |
-| [bosun](https://github.com/pressgang-wp/pressgang-bosun) | AI-agent guidelines & skills — future distribution channel for Shakedown's QA skills |
+| [bosun](https://github.com/pressgang-wp/pressgang-bosun) | AI-agent guidelines & skills — tells agents when to use `composer check`, PHPStan, Capstan, and Shakedown |
 
 ## 🛠️ Roadmap
 
