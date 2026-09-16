@@ -51,3 +51,29 @@ test('anonymous transport blocks POST, actions, sockets and unsafe redirects bef
     await new Promise(resolve => server.close(resolve));
   }
 });
+
+test('a transport failure after route fulfilment cannot crash the runner by aborting twice', async () => {
+  const server = createServer((req, res) => { res.end('<title>Fixture</title>'); });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  let handleRoute, closeTransport;
+  const context = {
+    once(event, callback) { closeTransport = callback; },
+    async routeWebSocket() {},
+    async route(pattern, callback) { handleRoute = callback; },
+  };
+  const blocked = [];
+  try {
+    await protectContext(context, origin, blocked, 5000);
+    await assert.doesNotReject(() => handleRoute({
+      request: () => ({ url: () => origin, method: () => 'GET', isNavigationRequest: () => true, headers: () => ({}) }),
+      fulfill: async () => { throw new Error('Target page, context or browser has been closed'); },
+      abort: async () => { throw new Error('Route is already handled!'); },
+    }));
+    assert.equal(blocked.length, 1);
+    assert.match(blocked[0], /transport .*Target page, context or browser has been closed/);
+  } finally {
+    closeTransport?.();
+    await new Promise(resolve => server.close(resolve));
+  }
+});
