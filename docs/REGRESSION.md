@@ -1,5 +1,20 @@
 # Derived regression contract
 
+Start in the consumer project with `npx shakedown init`. The interactive setup
+detects local WordPress and its home URL, asks for production and optional staging
+origins, writes `shakedown.config.json`, and ignores generated `.shakedown/`
+artifacts. For non-interactive setup:
+
+```sh
+npx shakedown init --site-path=./wp --base-url=https://theme.test \
+  --reference=https://example.org --staging=https://staging.example.org --yes
+```
+
+Commit the generated config and `.gitignore`. Existing configs are never replaced
+or shadowed; edit them to add environments later. Setup does not install packages,
+launch tests or write WordPress data. Relative `sitePath` values resolve against
+the config directory. See `shakedown init --help` for discovery and flag details.
+
 `shakedown regression` compares one locally derived PressGang route plan on two
 origins. `sitePath` and `baseUrl` retain their existing meaning: the WordPress
 installation inspected by WP-CLI, and its public home origin. They are discovery,

@@ -21,6 +21,7 @@ import { resolveTarget } from '../lib/target.mjs';
 import { capstanDoctor, deriveMatrix, mergeRoutes } from '../lib/derive.mjs';
 import { activeSuppressions } from '../lib/suppress.mjs';
 import { runRegression } from '../lib/regression.mjs';
+import { runInit } from '../lib/init.mjs';
 import { bootSandbox, DEFAULT_FIXTURE_EPOCH, seedAcfStates, seedJourneySetups, seedThemeMuster } from '../lib/sandbox.mjs';
 
 const pkgRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -140,9 +141,12 @@ try {
       flags[match[1]] = match[2];
     }
   }
-  const target = resolveTarget(workspace, flags, { requireBaseUrl: command !== 'sandbox', regression: command === 'regression' });
+  const target = command === 'init' ? null : resolveTarget(workspace, flags, { requireBaseUrl: command !== 'sandbox', regression: command === 'regression' });
 
   switch (command) {
+    case 'init':
+      await runInit(workspace, argv.slice(1));
+      break;
     case 'regression': {
       const run = await runRegression(target, workspace);
       process.exitCode = run.exitCode;
@@ -219,7 +223,7 @@ try {
       break;
     }
     default:
-      console.error(`Unknown command "${command}". Usage: shakedown [matrix|test|ui|sandbox|regression] [--target=<name>]`);
+      console.error(`Unknown command "${command}". Usage: shakedown [init|matrix|test|ui|sandbox|regression] [--target=<name>]`);
       process.exitCode = 1;
   }
 } catch (err) {

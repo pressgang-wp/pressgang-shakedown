@@ -70,6 +70,12 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
 
 ## Mental Model
 
+- **Setup** (`lib/init.mjs`)
+  `shakedown init` creates project-local configuration and ignores run artifacts.
+  It runs before target resolution, uses bounded WordPress discovery and optional
+  read-only WP-CLI home lookup, and never overwrites or shadows an existing config.
+  These local setup writes are separate from the read-only testing modes; they
+  never install packages, mutate WordPress data or write visual baselines.
 - **Target** (`lib/target.mjs`)
   Resolves the site path, base URL, and `shakedown.config.json` for a run —
   including central mode, where one clone drives any registered `--target`.
@@ -129,6 +135,7 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
 ## Commands
 
 ```bash
+npx shakedown init       # set up config and ignored reports in the consumer project
 npx shakedown            # derive the matrix, then run every pass (attached)
 npx shakedown matrix     # print the route matrix only
 npx shakedown sandbox    # boot the disposable WordPress, seed, run every pass
@@ -198,6 +205,7 @@ PHP evidence.
 ## Where to Look
 
 - `bin/shakedown.mjs` — the CLI and mode dispatch
+- `lib/init.mjs` — project setup, prompts, bounded discovery and config creation
 - `lib/sandbox.mjs` — sandbox assembly, isolation witness, seeding layers
 - `lib/derive.mjs` — matrix derivation, Capstan oracle/doctor, route merge
 - `lib/target.mjs` — target/config resolution
@@ -217,5 +225,6 @@ PHP evidence.
 
 ## Final Rule
 
-If a check cannot be derived from the theme's own declarations, or a write cannot
-be proven to land in the disposable sandbox, it does not belong in Shakedown.
+If a check cannot be derived from the theme's own declarations, or a WordPress
+data write cannot be proven to land in the disposable sandbox, it does not belong
+in Shakedown. `init` may write only local project configuration and ignore rules.

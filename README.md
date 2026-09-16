@@ -23,11 +23,41 @@ That's it. Shakedown walks up from your theme to find `wp-config.php`, asks WP-C
 Other commands:
 
 ```bash
+npx shakedown init            # create project configuration interactively
 npx shakedown matrix          # 🗺️ just enumerate and print the routes
 npx shakedown test            # 🧪 run passes against the existing matrix
 npx shakedown ui              # Playwright's watch/UI mode
 npx playwright show-report    # browse the last run
 ```
+
+### Set up a project for regression
+
+Run `npx shakedown init` from the project directory where you want the config and
+reports to live. It detects WordPress in the current directory, an ancestor, or
+common locations (`wp`, `wordpress`, `web/wp`, `public/wp`, `public`), reads the
+local home URL through WP-CLI, and asks for the production URL and optional staging
+URL. Leave production blank for attached-only setup. For scripted setup:
+
+```sh
+npx shakedown init --site-path=./wp --base-url=https://mysite.test \
+  --reference=https://example.org --staging=https://staging.example.org --yes
+npx shakedown regression --against=production --candidate=local
+```
+
+Setup creates `shakedown.config.json` and adds `/.shakedown/` to `.gitignore`.
+Commit both files with your project. Paths in the config are relative to the
+config's directory. Existing configs (including an ancestor's central config)
+are never overwritten or shadowed; edit them directly. Ambiguous installations
+require `--site-path` or an interactive choice. Non-interactive runs never wait
+for input; `--yes` uses detected values without asking questions in a terminal.
+Use `npx shakedown init --help` for options.
+
+`init` only sets up local project files. It does not install dependencies, run
+tests, create baselines or modify WordPress data. If WP-CLI cannot read the home
+URL, supply `--base-url`. Regression URLs must be HTTP(S) origins without paths
+or credentials; authenticated staging is not supported. Each regression run prints
+the `.shakedown/regression/run-…/index.html` path to open in your browser. Share the
+whole run folder, including its paired screenshots.
 
 Optional `shakedown.config.json` in the theme, for overrides only:
 
