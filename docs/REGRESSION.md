@@ -273,3 +273,23 @@ be interpreted as intentional exclusions from rewrite rules alone.
 This checks routing availability, not a declaration of expected 404 behavior.
 A matching archive rule retains the sample even if another rule might shadow it;
 the browser test still determines whether that route actually works.
+
+## Semantic differences and comparison limits
+
+Empty-link comparisons ignore captured position and dimensions. A link moving
+down the page, or changing its box size, does not by itself create an empty-link
+difference. Link content, count and order still participate in comparison.
+The original captured geometry remains in each side's evidence; genuine image
+dimensions, landmarks and other layout evidence continue to be compared.
+
+Full captures record the selector and number of structural content regions.
+Structural comparison requires exactly one captured `<main>` on each side.
+Missing, multiple or unknown regions produce **Structural comparison unavailable**
+with both scopes and raw structural arrays retained. The report counts this
+separately as a comparison limitation, keeps it visible for review, and does not
+describe the candidate's entire structure as newly added. With one `<main>` on
+each side, structural changes are compared normally.
+
+For older saved evidence, the comparator can infer the number of main elements
+from captured landmarks. If that evidence is missing too, it reports an unknown
+scope rather than assuming the structural arrays are comparable.
