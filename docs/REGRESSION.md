@@ -174,3 +174,24 @@ image matching with defensible layout gates, ACF coverage inventories and opted-
 read-only filter/menu interactions remain future work. Authored project journeys
 remain separate. CI runtime/action and Muster pin maintenance are separate changes;
 the regression implementation does not update an unverified fixture dependency.
+
+## Identifying accessibility elements
+
+Under **Accessibility: element details**, expand a rule and then an element.
+Each element includes its selector, escaped HTML, axe's explanation and check
+data. Contrast checks include measured and required ratios and foreground and
+background colours when axe provides them.
+
+The close-up outlines the element on a saved screenshot. Expand **Show location
+on full page** for context, or **Open original screenshot** for the unaltered
+image. Highlights are report overlays; they do not modify the tested page or
+visual baselines. Missing, hidden or ambiguous elements retain their details with
+an explicit explanation when a highlight cannot be captured.
+
+These are candidate accessibility findings, not proof of a change from production.
+Existing rule suppressions still apply and remain disclosed. Trial reports also
+include element evidence, retaining each retry attempt separately. Share the
+report directory with its images, not just the HTML file.
+
+Older reports cannot recover details that were not saved. Run Shakedown again
+with the updated version to capture this evidence.

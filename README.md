@@ -304,3 +304,8 @@ inconclusive/unmatched evidence. Differences alone are advisory in this release.
 
 See [the regression contract](docs/REGRESSION.md) for policies, matching rules,
 normalization, safety boundaries and limitations.
+
+Accessibility findings in regression and trial reports include per-element selectors,
+HTML, axe explanations and highlighted screenshot close-ups. Expand a rule under
+**Accessibility: element details**, then select an element. See
+[reviewing accessibility evidence](docs/REGRESSION.md#identifying-accessibility-elements).

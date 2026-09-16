@@ -15,7 +15,7 @@ test('derived runner keeps baselines and attached artifacts intact, reports miss
     if (req.url === '/feed/') { res.writeHead(200, { 'content-type': 'application/rss+xml' }); res.end('<rss/>'); return; }
     const missing = req.url === '/probe' || (candidate && req.url === '/gone');
     res.writeHead(missing ? 404 : 200, { 'content-type': 'text/html' });
-    res.end(`<!doctype html><html lang="en"><title>${candidate ? 'Candidate' : 'Reference'}</title><main><h1>${missing ? 'Not found' : 'Welcome'}</h1><p>Content.</p>${candidate ? '<a href="">Empty destination</a>' : ''}</main><nav aria-label="Main"><a href="/gone">Other page</a></nav></html>`);
+    res.end(`<!doctype html><html lang="en"><title>${candidate ? 'Candidate' : 'Reference'}</title><main><h1>${missing ? 'Not found' : 'Welcome'}</h1><p>Content.</p>${candidate ? '<a href="">Empty destination</a><button></button>' : ''}</main><nav aria-label="Main"><a href="/gone">Other page</a></nav></html>`);
   });
   const reference = serve(false), candidate = serve(true);
   await Promise.all([reference, candidate].map(server => new Promise(resolve => server.listen(0, '127.0.0.1', resolve))));
@@ -42,6 +42,10 @@ test('derived runner keeps baselines and attached artifacts intact, reports miss
     assert.ok(run.results[0].differences.some(d => d.key === 'title' && d.suppressed));
     assert.ok(run.results[0].differences.some(d => d.key === 'emptyLinks' && !d.suppressed));
     assert.ok(readFileSync(join(run.dir, run.results[0].candidate.screenshot)).length > 100);
+    const evidence = run.results[0].candidate.accessibility;
+    assert.ok(evidence.findings.some(f => f.id === 'button-name' && f.nodes[0].highlight.box));
+    assert.ok(readFileSync(join(run.dir, evidence.screenshot)).length > 100);
+    assert.match(readFileSync(join(run.dir, 'index.html'), 'utf8'), /Accessibility: element details/);
     assert.equal(readFileSync(join(dir, 'tests', '__screenshots__', 'sentinel'), 'utf8'), 'baseline');
     assert.equal(readFileSync(join(dir, '.shakedown', 'matrix.json'), 'utf8'), 'attached-matrix');
     assert.equal(readFileSync(join(dir, '.shakedown', 'trial-report.html'), 'utf8'), 'attached-report');
