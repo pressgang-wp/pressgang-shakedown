@@ -186,6 +186,8 @@ function shakedown_supp_feed_routes(): array {
 	return $routes;
 }
 
+require_once __DIR__ . '/archive-routing.php';
+
 $samples = isset( $args[0] ) ? (int) $args[0] : 2;
 
 $routes = array_merge(
@@ -200,4 +202,4 @@ $routes = array_merge(
 // state — usually a template branch of its own — never got looked at.
 shakedown_supp_add( $routes, home_url( '/?s=' . rawurlencode( 'shakedown-no-such-term-zzq' ) ), 'search:empty' );
 
-echo json_encode( [ 'routes' => $routes ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
+echo json_encode( shakedown_filter_archive_routes( $routes ), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );

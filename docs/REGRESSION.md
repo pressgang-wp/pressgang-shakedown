@@ -255,3 +255,21 @@ Reports open on **Needs attention**, hiding passed observations from the route
 index and page cards. Choose **Passed pages** or **All observations** to inspect
 coverage. Every card carries a Passed, Failed, Review needed or Inconclusive
 badge. Summary totals always include all observations, independent of filters.
+
+## Supplementary archive discovery
+
+For pretty permalinks, author and date samples require a matching archive rule
+in WordPress's currently generated, filtered rewrite rules. Generic page rules
+and dated single-post rules do not establish an archive. Discovery exclusions
+are recorded with the URL and reason in the matrix and reports. Other route
+sources, such as explicit menu links, remain eligible for testing.
+
+Rules are generated in memory; Shakedown never flushes or updates stored rules.
+A difference from stored rules produces a warning for separate review. Plain
+permalinks and explicit query-string URLs retain the previous sampling behavior.
+Generation failures retain samples with a warning. Runtime-only 404 guards cannot
+be interpreted as intentional exclusions from rewrite rules alone.
+
+This checks routing availability, not a declaration of expected 404 behavior.
+A matching archive rule retains the sample even if another rule might shadow it;
+the browser test still determines whether that route actually works.

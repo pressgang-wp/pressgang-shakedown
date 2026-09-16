@@ -12,7 +12,7 @@ import { normaliseIgnore } from '../../lib/suppress.mjs';
  * install. The stub distinguishes the two invocations the way the real thing
  * does — by which script it was handed.
  */
-function withFakeWp({ base, supplement = [] }, run) {
+function withFakeWp({ base, supplement = [], excluded = [], warnings = [] }, run) {
   const root = mkdtempSync(join(tmpdir(), 'shakedown-derive-test-'));
   const bin = join(root, 'bin');
   const oldPath = process.env.PATH;
@@ -21,7 +21,7 @@ function withFakeWp({ base, supplement = [] }, run) {
   writeFileSync(join(bin, 'wp'), `#!/bin/sh
 case "$*" in
   *matrix-supplement.php*) cat <<'SUPP'
-${JSON.stringify({ routes: supplement })}
+${JSON.stringify({ routes: supplement, excluded, warnings })}
 SUPP
   ;;
   *) cat <<'BASE'
@@ -122,5 +122,14 @@ test('deriveMatrix() applies ignore.routes to supplementary families too', () =>
 
     assert.equal(ignored, 1);
     assert.equal(matrix.routes.some((r) => r.kind === 'feed'), false);
+  });
+});
+
+test('discovery disclosures survive supplement merging', () => {
+  const excluded = [{url:'https://site.test/author/alice/',kind:'author',reason:'No matching author archive rule'}];
+  withFakeWp({base:ROUTES,excluded,warnings:['Stored rules differ']}, workspace => {
+    const {matrix} = deriveMatrix(target({}),workspace);
+    assert.deepEqual(matrix.discoveryExcluded,excluded);
+    assert.deepEqual(matrix.discoveryWarnings,['Stored rules differ']);
   });
 });
