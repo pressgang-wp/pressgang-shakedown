@@ -323,3 +323,41 @@ Runtime guards that deliberately return 404 cannot be inferred from registration
 alone; use disclosed `ignore.routes` policies for intentional exclusions.
 Additional content routes have no invented Capstan template oracle. Discovery
 uses reads only and does not change WordPress data or rewrite rules.
+
+## Image checks and actionable element evidence
+
+All regression levels now check visible image elements for a missing source,
+including images with no `src` attribute. This is a candidate health failure.
+Existing broken-image checks remain in place. Possible aspect-ratio distortion
+and document-wide horizontal overflow are advisory findings, including at the
+errors level. They are candidate observations, not proof of a change from production.
+
+Distortion checks compare natural dimensions with the rendered CSS content box
+for `object-fit: fill` images of at least 32×32 pixels. A discrepancy must exceed
+10% and two pixels. Intentional `contain`/`cover` cropping is excluded. Overflow
+requires the document to exceed the viewport by more than two pixels; a wide
+carousel clipped inside its container does not alone establish page overflow.
+The report highlights up to 20 possible overflow contributors and discloses any
+omitted contributors; it does not claim these elements are proven causes.
+
+Use top-level `ignore.imageIssues` to narrowly suppress an issue ID, message or
+selector substring. For example, `"image-aspect-ratio"` suppresses that advisory
+category; a specific selector is narrower. Suppressed findings retain raw
+evidence and are labelled in the report. Existing `regression.ignoreSelectors`
+continues to mask screenshots and exclude comparison data, without disabling
+health checks. Accessibility rules are unchanged.
+
+Under **Images, links and forms: element details**, expand an element to see its
+selector, HTML excerpt, and screenshot close-up with an outline. Form and link
+evidence is available at core/full levels; image comparison evidence at full.
+Candidate image-health findings retain evidence at every level. HTML excerpts
+are capped at 6,000 characters with an explicit truncation notice. Capture failures
+and elements with no visible box retain an explanation instead of a guessed highlight.
+
+The reference and candidate sections show the captured elements in a changed
+group; not every listed element necessarily changed. Selectors, HTML and highlight
+coordinates are stored separately from semantic comparison values. Movement alone
+does not create an empty-link difference. Image-size and layout differences are
+still compared. No carousel controls are clicked and no form is submitted; this
+cannot establish that a carousel advances correctly. A rerun is needed to collect
+new evidence; existing saved reports are unchanged.

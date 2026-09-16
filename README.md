@@ -331,5 +331,7 @@ npx shakedown regression --level=full --coverage=exhaustive
 ```
 
 This can be a large run; `--viewports=desktop` limits it to one viewport.
+Image checks flag missing sources, possible distortion and page overflow.
+Image, empty-link and form findings include selectors and screenshot highlights.
 See [coverage and evidence details](docs/REGRESSION.md#coverage-and-exhaustive-content-discovery)
 for scope, exclusions and suppression policy.
