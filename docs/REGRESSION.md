@@ -52,6 +52,14 @@ folder to share the report. It never reads or writes `tests/__screenshots__`, no
 replaces the ordinary Trial Report or matrix. Captures are run artifacts, not
 committed baselines; the tool does not automatically delete old evidence.
 
+Before browser evidence is collected, each page is scrolled in viewport-sized
+steps and returned to the top so native and script-driven lazy images can load.
+Scrolling is bounded to 40 steps, followed by a two-second image-settling wait;
+the report discloses a reached limit or pending images. Completed but broken lazy
+images join candidate health findings when the bottom was reached. This prevents
+an unvisited footer from being mistaken for missing logos, without allowing an
+infinite-scroll page to turn capture into an unbounded crawl.
+
 The paired plan preserves route kind, expected status, HTML eligibility and
 Capstan oracle metadata. Capstan/fallback plus supplementary route families remain
 the canonical source. Critical paths supplement that plan and cannot replace it.

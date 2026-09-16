@@ -52,3 +52,45 @@ test('derived runner keeps baselines and attached artifacts intact, reports miss
     rmSync(dir, { recursive: true });
   }
 });
+
+test('interrupting a paired run preserves an explicit incomplete report', async () => {
+  const { spawn } = await import('node:child_process');
+  const { once } = await import('node:events');
+  const { readdirSync } = await import('node:fs');
+  const dir = mkdtempSync(join(tmpdir(), 'shakedown-regression-interrupt-'));
+  let child, interrupted = false;
+  const server = createServer((req, res) => {
+    if (child && !interrupted) {
+      interrupted = true;
+      child.kill('SIGINT');
+    }
+    setTimeout(() => {
+      res.writeHead(200, { 'content-type': 'text/html' });
+      res.end('<title>Fixture</title>');
+    }, 100);
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const ref = `http://127.0.0.1:${server.address().port}`;
+  try {
+    mkdirSync(join(dir, 'bin'));
+    const matrix = { routes: [{ url: 'http://discovery.test/', kind: 'home', expect: 200 }] };
+    writeFileSync(join(dir, 'bin', 'wp'), `#!/usr/bin/env node\nconsole.log(JSON.stringify(process.argv.includes('doctor') ? {checks:[],failures:0,warnings:0} : process.argv.includes('eval-file') ? {routes:[]} : ${JSON.stringify(matrix)}));\n`);
+    chmodSync(join(dir, 'bin', 'wp'), 0o755);
+    writeFileSync(join(dir, 'shakedown.config.json'), JSON.stringify({ sitePath: dir, baseUrl: 'http://discovery.test', regression: { references: { production: ref }, candidates: { local: 'http://127.0.0.1:1' }, navigationLimit: 0 } }));
+    const cli = new URL('../../bin/shakedown.mjs', import.meta.url).pathname;
+    child = spawn(process.execPath, [cli, 'regression'], { cwd: dir, env: { ...process.env, PATH: join(dir, 'bin') + ':' + process.env.PATH }, stdio: 'ignore' });
+    const [code, signal] = await once(child, 'exit');
+    assert.equal(signal, null);
+    assert.equal(code, 2);
+    const root = join(dir, '.shakedown', 'regression');
+    const run = JSON.parse(readFileSync(join(root, readdirSync(root)[0], 'run.json')));
+    assert.equal(run.state, 'incomplete');
+    assert.match(run.error, /interrupted/);
+    assert.equal(run.results.length, 0);
+    assert.equal(run.exitCode, 2);
+  } finally {
+    if (child?.exitCode === null) child.kill('SIGTERM');
+    await new Promise(resolve => server.close(resolve));
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
