@@ -319,6 +319,6 @@ npx shakedown regression --level=core --viewports=desktop
 npx shakedown regression --level=full --viewports=desktop,tablet,mobile
 ```
 
-New configurations default to desktop; existing selections are preserved.
+Regression defaults to desktop, tablet and mobile; explicit selections are preserved.
 Reports disclose skipped checks and offer finding-category and viewport filters.
 See [testing levels and viewports](docs/REGRESSION.md#choose-the-testing-level-and-viewports).

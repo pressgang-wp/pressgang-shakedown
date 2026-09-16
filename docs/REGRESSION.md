@@ -34,7 +34,7 @@ same single-target or central `targets` entry.
     "defaultReference": "production",
     "defaultCandidate": "local",
     "defaultLevel": "full",
-    "defaultViewports": ["desktop"],
+    "defaultViewports": ["desktop", "tablet", "mobile"],
     "viewports": [
       { "name": "desktop", "width": 1280, "height": 900 },
       { "name": "mobile", "width": 390, "height": 844 }
@@ -103,9 +103,9 @@ Save defaults inside the existing `regression` object:
 ```
 
 CLI flags override defaults for one run without editing configuration. New
-`init` configurations select desktop only. Existing configurations retain their
-`viewports` selection; older configs with neither viewport setting retain desktop
-and mobile. The level defaults to full to preserve existing check coverage.
+`init` configurations and configs with no viewport settings select desktop,
+tablet and mobile. Explicit `defaultViewports` or `viewports` selections are
+preserved; the example above deliberately narrows the default to desktop. The level defaults to full to preserve existing check coverage.
 
 Each command creates a separate report. Limited runs prominently show omitted
 checks; an errors-only pass does not mean the site passed full regression.

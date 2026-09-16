@@ -17,7 +17,7 @@ test('origin and remapping reject authority tricks, actions and preserve exact i
   assert.equal(safeURL('https://prod.test/%77p-admin/'), false);
 });
 test('config validates keys, endpoints, viewport bounds and policies', () => {
-  assert.equal(options().viewports.length, 2);
+  assert.equal(options().viewports.length, 3);
   for (const patch of [{ refernces: {} }, { accept: [''] }, { viewports: [] }, { navigationLimit: 201 }, { timeout: -1 }, { candidates: raw.references }]) assert.throws(() => regressionOptions({ ...raw, ...patch }, 'https://discovery.test'));
   assert.throws(() => regressionOptions(raw, 'https://discovery.test', { candidate: 'missing' }));
 });

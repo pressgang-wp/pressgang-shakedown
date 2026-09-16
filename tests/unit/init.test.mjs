@@ -23,7 +23,7 @@ test('init creates a portable regression config, preserves ignore contents and r
   const config = await initProject(dir, { reference: 'https://production.example/', staging: 'https://staging.example' }, quiet);
   assert.equal(config.sitePath, 'wp');
   assert.equal(config.baseUrl, 'https://local.test');
-  assert.deepEqual(config.regression.defaultViewports, ['desktop']);
+  assert.deepEqual(config.regression.defaultViewports, ['desktop', 'tablet', 'mobile']);
   assert.equal(config.regression.candidates.staging, 'https://staging.example');
   const before = readFileSync(join(dir, 'shakedown.config.json'), 'utf8');
   assert.equal(readFileSync(join(dir, '.gitignore'), 'utf8'), 'node_modules/\n# keep this comment\n/.shakedown/\n');

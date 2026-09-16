@@ -145,7 +145,7 @@ core:   application health + serious/critical axe findings + status, redirects,
         forms and empty-link differences. Changes require review.
 full:   all checks, content/structure differences and paired screenshots.
 
-New init configurations select desktop. Existing viewport selections are preserved.
+Default viewports: desktop, tablet and mobile. Explicit configuration or flags override this.
 Viewport presets set screen dimensions, not device or touch emulation.
 Flags also accept a separate value, e.g. --level errors.
 Skipped checks are disclosed in the report; a clean limited run is not a full pass.`);

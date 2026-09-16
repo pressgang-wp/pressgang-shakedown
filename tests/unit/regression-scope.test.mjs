@@ -7,7 +7,7 @@ const options = (raw = {}, flags = {}) => regressionOptions({ ...config, ...raw 
 
 test('scope defaults remain compatible and flags override saved selections without changing them', () => {
   assert.equal(options().level, 'full');
-  assert.deepEqual(options().viewports.map(v => v.name), ['desktop', 'mobile']);
+  assert.deepEqual(options().viewports.map(v => v.name), ['desktop', 'tablet', 'mobile']);
   const raw = { defaultLevel: 'core', defaultViewports: ['desktop'], viewports: [{ name: 'desktop', width: 1440, height: 900 }] };
   assert.equal(options(raw).level, 'core');
   assert.equal(options(raw).viewports[0].width, 1440);
