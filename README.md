@@ -322,3 +322,14 @@ npx shakedown regression --level=full --viewports=desktop,tablet,mobile
 Regression defaults to desktop, tablet and mobile; explicit selections are preserved.
 Reports disclose skipped checks and offer finding-category and viewport filters.
 See [testing levels and viewports](docs/REGRESSION.md#choose-the-testing-level-and-viewports).
+
+Regression reports also disclose known content routes omitted by sampling. Include
+all published public singles and public terms (including empty landing pages) with:
+
+```sh
+npx shakedown regression --level=full --coverage=exhaustive
+```
+
+This can be a large run; `--viewports=desktop` limits it to one viewport.
+See [coverage and evidence details](docs/REGRESSION.md#coverage-and-exhaustive-content-discovery)
+for scope, exclusions and suppression policy.

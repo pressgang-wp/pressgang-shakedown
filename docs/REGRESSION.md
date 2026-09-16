@@ -54,7 +54,7 @@ npx shakedown regression --against=production --candidate=staging
 npx shakedown regression --target=client --candidate=staging
 ```
 
-The named environment flags, `--target`, `--level` and `--viewports` are accepted.
+The named environment flags, `--target`, `--level`, `--viewports` and `--coverage` are accepted.
 Use `npx shakedown regression --help` for usage. Playwright options,
 journeys, seeding and baseline updates cannot enter this execution path. The first
 release supports origin-root deployments; it rejects credentials, path prefixes,
@@ -293,3 +293,33 @@ each side, structural changes are compared normally.
 For older saved evidence, the comparator can infer the number of main elements
 from captured landmarks. If that evidence is missing too, it reports an unknown
 scope rather than assuming the structural arrays are comparable.
+
+## Coverage and exhaustive content discovery
+
+Every regression run reads an inventory of published, publicly viewable singles
+and public taxonomy terms from the discovery WordPress installation. Empty terms
+are included: a term with no assigned posts can still have a substantial landing
+page. The report lists **known routes not selected**, exclusions with reasons,
+and selected route/viewports that were **not visited**. Those are distinct from
+pages that were visited and failed. Inventory failure is displayed as unknown
+coverage, never as zero omitted routes.
+
+Sampling remains the default. To include the whole finite content inventory:
+
+```sh
+npx shakedown regression --level=full --coverage=exhaustive
+```
+
+Use `--viewports=desktop` to start with one viewport, or save
+`"coverage": "exhaustive"` inside `regression`. Exhaustive runs can be much larger
+than sampled runs. The inventory limit is 20,000 entries; exceeding it or failing
+to read the inventory stops an exhaustive run with an incomplete report.
+
+“Exhaustive” applies to the discovery site's published public content and terms,
+not every possible URL or interaction. Author/date archives, feeds, pagination
+and search probes retain their existing derived samples. Reference-only content
+not present in the discovery installation remains outside this inventory.
+Runtime guards that deliberately return 404 cannot be inferred from registration
+alone; use disclosed `ignore.routes` policies for intentional exclusions.
+Additional content routes have no invented Capstan template oracle. Discovery
+uses reads only and does not change WordPress data or rewrite rules.

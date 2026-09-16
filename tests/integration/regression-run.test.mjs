@@ -27,7 +27,7 @@ test('derived runner keeps baselines and attached artifacts intact, reports miss
   try {
     mkdirSync(join(dir, 'bin'));
     const matrix = { routes: [{ url: dest + '/', kind: 'home', expect: 200 }, { url: dest + '/feed/', kind: 'feed', html: false, expect: 200 }, { url: dest + '/probe', kind: '404', expect: 404 }] };
-    writeFileSync(join(dir, 'bin', 'wp'), `#!/usr/bin/env node\nconst args=process.argv.slice(2);console.log(JSON.stringify(args.includes('doctor') ? {checks:[],failures:0,warnings:0} : args.includes('eval-file') ? {routes:[]} : ${JSON.stringify(matrix)}));\n`);
+    writeFileSync(join(dir, 'bin', 'wp'), `#!/usr/bin/env node\nconst args=process.argv.slice(2);console.log(JSON.stringify(args.includes('doctor') ? {checks:[],failures:0,warnings:0} : args.some(a=>a.endsWith('route-inventory.php')) ? {routes:[{url:${JSON.stringify(dest + '/inventory-only')},kind:'term:training-type',expect:200}]} : args.includes('eval-file') ? {routes:[]} : ${JSON.stringify(matrix)}));\n`);
     chmodSync(join(dir, 'bin', 'wp'), 0o755);
     process.env.PATH = join(dir, 'bin') + ':' + originalPath;
     mkdirSync(join(dir, 'tests', '__screenshots__'), { recursive: true });
@@ -38,6 +38,7 @@ test('derived runner keeps baselines and attached artifacts intact, reports miss
     const target = { sitePath: dir, baseUrl: dest, samplesPerType: 2, searchTerm: 'test', ignore: normaliseIgnore(), regression: regressionOptions({ references: { production: ref }, candidates: { local: dest }, viewports: [{ name: 'desktop', width: 800, height: 600 }], accept: ['title on /'] }, dest) };
     const run = await runRegression(target, dir);
     assert.equal(run.state, 'complete');
+    assert.equal(run.coverage.notSelected[0].path, '/inventory-only');
     assert.equal(run.exitCode, 1);
     assert.equal(run.results.find(r => r.path === '/gone').classification, 'reference-only');
     assert.equal(run.results.find(r => r.path === '/feed/').candidate.screenshot, undefined);
@@ -97,6 +98,20 @@ test('derived runner keeps baselines and attached artifacts intact, reports miss
       assert.equal(await page.locator('article:visible').count(), 0);
       assert.equal(await page.locator('#review-empty').isVisible(), true);
     } finally { await browser.close(); }
+    const exhaustive = await runRegression({ ...target, regression: { ...target.regression, level: 'errors', coverage: 'exhaustive' } }, dir);
+    assert.equal(exhaustive.state, 'complete');
+    assert.ok(exhaustive.results.some(r => r.path === '/inventory-only'));
+    const saved = JSON.parse(readFileSync(join(exhaustive.dir, 'run.json'), 'utf8'));
+    assert.equal(saved.coverage.notSelected.length, 0);
+    assert.equal(saved.coverage.notVisited.length, 0);
+    const wpPath = join(dir, 'bin', 'wp');
+    writeFileSync(wpPath, readFileSync(wpPath, 'utf8').replace('console.log(JSON.stringify', "if(args.some(a=>a.endsWith('route-inventory.php'))) process.exit(1);console.log(JSON.stringify"));
+    const unavailable = await runRegression({ ...target, regression: { ...target.regression, coverage: 'exhaustive' } }, dir);
+    assert.equal(unavailable.state, 'incomplete');
+    assert.equal(unavailable.exitCode, 2);
+    assert.equal(unavailable.results.length, 0);
+    assert.equal(unavailable.coverage.state, 'unavailable');
+    assert.match(readFileSync(join(unavailable.dir, 'index.html'), 'utf8'), /number of omitted routes is unknown/);
     assert.ok(methods.every(method => method === 'GET'));
   } finally {
     process.env.PATH = originalPath;
