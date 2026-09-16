@@ -237,3 +237,40 @@ Still ahead:
 - Node 20+
 - WP-CLI on your PATH
 - A locally reachable PressGang (or any WordPress) site — the derived passes are actually framework-agnostic; PressGang is where the deeper introspection is headed
+
+## Production versus an updated theme
+
+`shakedown regression` derives the same local route matrix, then compares those
+exact paths on a production reference and a local or staging candidate. Candidate
+health failures remain independent of production differences. Desktop/mobile
+screenshots and semantic comparisons appear in a separate Regression Report;
+production captures never become committed visual baselines.
+
+```json
+{
+  "sitePath": "/path/to/wordpress",
+  "baseUrl": "https://theme.test",
+  "regression": {
+    "references": { "production": "https://example.org" },
+    "candidates": {
+      "local": "https://theme.test",
+      "staging": "https://staging.example.org"
+    }
+  }
+}
+```
+
+```sh
+npx shakedown regression --against=production
+npx shakedown regression --against=production --candidate=staging
+```
+
+Both sides use anonymous GET-only traffic, with browser writes blocked. No seeding,
+journeys, form submissions or baseline updates run. A bounded production navigation
+supplement exposes possible reference-only paths without replacing derived coverage.
+Reports live in `.shakedown/regression/run-*/index.html`, alongside JSON and paired
+screenshots. Exit 1 means candidate health failures; exit 2 means incomplete or
+inconclusive/unmatched evidence. Differences alone are advisory in this release.
+
+See [the regression contract](docs/REGRESSION.md) for policies, matching rules,
+normalization, safety boundaries and limitations.

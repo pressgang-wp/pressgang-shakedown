@@ -8,13 +8,16 @@ taxonomies, templates, and menus in `config/`, Shakedown derives the whole test
 suite from the theme itself: it enumerates every route the site serves, then
 checks each one in a real browser.
 
-It runs in one of two **modes**:
+It runs in one of three **modes**:
 
 - **Attached** — your live local site. Answers "is my site healthy right now?"
   **Strictly read-only** — it only ever GETs pages.
 - **Sandbox** — a disposable throwaway WordPress. Answers "is my *theme* correct,
   independent of content?" This is the only mode that writes, and only to a
   database it proves is throwaway first.
+- **Regression** — one local discovery matrix compared on reference and candidate
+  origins. Anonymous GET-only transport blocks browser writes. Candidate health
+  and reference differences remain separate; captures never become baselines.
 
 Shakedown is a Node + Playwright tool. PHP appears only where it must run inside
 WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
@@ -129,6 +132,7 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
 npx shakedown            # derive the matrix, then run every pass (attached)
 npx shakedown matrix     # print the route matrix only
 npx shakedown sandbox    # boot the disposable WordPress, seed, run every pass
+npx shakedown regression --against=production --candidate=staging
 npx shakedown test [...] # run passes; extra args pass through to Playwright
 npx shakedown ui         # Playwright UI / watch mode
 ```
@@ -197,6 +201,11 @@ PHP evidence.
 - `lib/sandbox.mjs` — sandbox assembly, isolation witness, seeding layers
 - `lib/derive.mjs` — matrix derivation, Capstan oracle/doctor, route merge
 - `lib/target.mjs` — target/config resolution
+- `lib/regression*.mjs` — paired plan, anonymous transport, runtime evidence and
+  separate Regression Report; `docs/REGRESSION.md` defines the contract
+- `lib/health.mjs` — checks shared by passes 00–02 and regression (keep parity)
+- `tests/integration/` — adversarial local-browser transport checks; run with
+  `npm run test:regression` after installing Chromium (never published)
 - `passes/00`–`03`, `passes/matrix.mjs` — the passes and their route source
 - `lib/suppress.mjs` — the `ignore` policy: matching, validation, disclosure
 - `tests/unit/` — this repo's own unit tests (never published)

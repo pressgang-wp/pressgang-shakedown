@@ -20,6 +20,7 @@ import { existsSync } from 'node:fs';
 import { resolveTarget } from '../lib/target.mjs';
 import { capstanDoctor, deriveMatrix, mergeRoutes } from '../lib/derive.mjs';
 import { activeSuppressions } from '../lib/suppress.mjs';
+import { runRegression } from '../lib/regression.mjs';
 import { bootSandbox, DEFAULT_FIXTURE_EPOCH, seedAcfStates, seedJourneySetups, seedThemeMuster } from '../lib/sandbox.mjs';
 
 const pkgRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -86,6 +87,7 @@ function matrix(target) {
   const { matrix: m, source, ignored, supplemented } = deriveMatrix(target, workspace);
   const via = supplemented > 0 ? `${source} + ${supplemented} supplementary` : source;
   console.log(`⚓ ${m.routes.length} routes for ${target.baseUrl} (via ${via})`);
+  for (const warning of m.discoveryWarnings ?? []) console.warn(`⚓ ${warning}`);
 
   // Suppression is never silent: what a run declines to check is stated up
   // front, here and in the trial report, so a shrinking suite can't pass for
@@ -129,9 +131,23 @@ try {
     );
   }
 
-  const target = resolveTarget(workspace, { target: targetFlag }, { requireBaseUrl: command !== 'sandbox' });
+  const flags = { target: targetFlag };
+  if (command === 'regression') {
+    for (const arg of args.slice(1)) {
+      const match = arg.match(/^--(against|candidate)=(.+)$/);
+      if (!match) throw new Error(`Unsupported regression argument: ${arg}. Use --against=<name> and --candidate=<name>.`);
+      if (flags[match[1]]) throw new Error(`Duplicate regression argument: ${match[1]}`);
+      flags[match[1]] = match[2];
+    }
+  }
+  const target = resolveTarget(workspace, flags, { requireBaseUrl: command !== 'sandbox', regression: command === 'regression' });
 
   switch (command) {
+    case 'regression': {
+      const run = await runRegression(target, workspace);
+      process.exitCode = run.exitCode;
+      break;
+    }
     case 'matrix':
       for (const r of matrix(target).routes) {
         console.log(`  [${r.expect}] ${r.kind.padEnd(28)} ${r.url}`);
@@ -203,7 +219,7 @@ try {
       break;
     }
     default:
-      console.error(`Unknown command "${command}". Usage: shakedown [matrix|test|ui|sandbox] [--target=<name>]`);
+      console.error(`Unknown command "${command}". Usage: shakedown [matrix|test|ui|sandbox|regression] [--target=<name>]`);
       process.exitCode = 1;
   }
 } catch (err) {
