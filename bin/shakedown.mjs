@@ -12,6 +12,7 @@
  * The invocation directory is the workspace: matrix, reports, and traces are
  * written there, and its tests/e2e/ (if present) runs as the journeys suite.
  */
+import { parseRegressionFlags } from '../lib/regression-scope.mjs';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
@@ -132,14 +133,27 @@ try {
     );
   }
 
+  if (command === 'regression' && args.length === 2 && args[1] === '--help') {
+    console.log(`Usage: shakedown regression [--against=production] [--candidate=local]
+  --level=errors|core|full       Override regression.defaultLevel (default: full)
+  --viewports=desktop,tablet,mobile
+                                Select viewport names; comma-separated, no spaces
+  --target=<name>                Select a centrally registered project
+
+errors: candidate application health; no production comparison or axe audit.
+core:   application health + serious/critical axe findings + status, redirects,
+        forms and empty-link differences. Changes require review.
+full:   all checks, content/structure differences and paired screenshots.
+
+New init configurations select desktop. Existing viewport selections are preserved.
+Viewport presets set screen dimensions, not device or touch emulation.
+Flags also accept a separate value, e.g. --level errors.
+Skipped checks are disclosed in the report; a clean limited run is not a full pass.`);
+    process.exit(0);
+  }
   const flags = { target: targetFlag };
   if (command === 'regression') {
-    for (const arg of args.slice(1)) {
-      const match = arg.match(/^--(against|candidate)=(.+)$/);
-      if (!match) throw new Error(`Unsupported regression argument: ${arg}. Use --against=<name> and --candidate=<name>.`);
-      if (flags[match[1]]) throw new Error(`Duplicate regression argument: ${match[1]}`);
-      flags[match[1]] = match[2];
-    }
+    Object.assign(flags, parseRegressionFlags(args.slice(1)));
   }
   const target = command === 'init' ? null : resolveTarget(workspace, flags, { requireBaseUrl: command !== 'sandbox', regression: command === 'regression' });
 

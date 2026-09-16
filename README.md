@@ -309,3 +309,16 @@ Accessibility findings in regression and trial reports include per-element selec
 HTML, axe explanations and highlighted screenshot close-ups. Expand a rule under
 **Accessibility: element details**, then select an element. See
 [reviewing accessibility evidence](docs/REGRESSION.md#identifying-accessibility-elements).
+
+
+Regression scope can be selected per run:
+
+```sh
+npx shakedown regression --level=errors --viewports=desktop
+npx shakedown regression --level=core --viewports=desktop
+npx shakedown regression --level=full --viewports=desktop,tablet,mobile
+```
+
+New configurations default to desktop; existing selections are preserved.
+Reports disclose skipped checks and offer finding-category and viewport filters.
+See [testing levels and viewports](docs/REGRESSION.md#choose-the-testing-level-and-viewports).

@@ -33,6 +33,8 @@ same single-target or central `targets` entry.
     },
     "defaultReference": "production",
     "defaultCandidate": "local",
+    "defaultLevel": "full",
+    "defaultViewports": ["desktop"],
     "viewports": [
       { "name": "desktop", "width": 1280, "height": 900 },
       { "name": "mobile", "width": 390, "height": 844 }
@@ -52,15 +54,68 @@ npx shakedown regression --against=production --candidate=staging
 npx shakedown regression --target=client --candidate=staging
 ```
 
-Only the named environment flags and `--target` are accepted. Playwright options,
+The named environment flags, `--target`, `--level` and `--viewports` are accepted.
+Use `npx shakedown regression --help` for usage. Playwright options,
 journeys, seeding and baseline updates cannot enter this execution path. The first
 release supports origin-root deployments; it rejects credentials, path prefixes,
 queries and fragments in environment URLs. Discovery URLs must use the configured
 discovery origin; rejected routes are listed, never silently remapped from an
 unrelated host. Exact pathname and query are identity; fragments are not.
 
+
+## Choose the testing level and viewports
+
+Start with application health, then expand the scope when you are ready:
+
+```sh
+npx shakedown regression --level=errors --viewports=desktop
+npx shakedown regression --level=core --viewports=desktop
+npx shakedown regression --level=full --viewports=desktop,tablet,mobile
+```
+
+| Level | What runs |
+| --- | --- |
+| `errors` | Candidate HTTP status, PHP/Twig error output, title presence, browser JS/console/request failures and broken images. No production requests, axe audit or comparison screenshots. |
+| `core` | Application checks plus serious/critical axe findings, status/redirect comparisons, form definitions and empty-link differences. Accessibility findings retain element highlights. |
+| `full` | Core checks plus all axe findings, title/heading/image/layout/structure differences and paired screenshots. |
+
+Levels are cumulative in check coverage. Core changes are review priorities, not
+proof of a severe regression. Forms are inspected, never submitted; these levels
+do not claim to test interactive workflows. All profiles retain existing route,
+request and rule suppressions. Core reports disclose omitted minor/moderate axe
+findings; the underlying axe engine may still evaluate those rules.
+
+The **Review** filter narrows observations to application errors, serious
+accessibility, core changes, other changes/advisories, inconclusive observations,
+or observations with no findings in the selected checks. **Viewport** further
+narrows the report. Filters do not change totals, exit status or saved evidence.
+
+Built-in viewport presets are desktop **1280×900**, tablet **768×1024** and mobile
+**390×844**. These are Chromium viewport dimensions, not device/touch emulation.
+Custom `viewports` entries override preset dimensions or add named sizes. Unknown
+or duplicate names fail early. Selection order is preserved; feeds run once.
+
+Save defaults inside the existing `regression` object:
+
+```json
+"defaultLevel": "core",
+"defaultViewports": ["desktop"]
+```
+
+CLI flags override defaults for one run without editing configuration. New
+`init` configurations select desktop only. Existing configurations retain their
+`viewports` selection; older configs with neither viewport setting retain desktop
+and mobile. The level defaults to full to preserve existing check coverage.
+
+Each command creates a separate report. Limited runs prominently show omitted
+checks; an errors-only pass does not mean the site passed full regression.
+Candidate-only errors runs use the derived route matrix without the production
+navigation supplement, and classify visited routes as `candidate-checked`.
+The errors level still uses the regression environment configuration.
+
 ## Evidence and outcomes
 
+The selected level limits what is collected; skipped checks are disclosed.
 Each invocation creates `.shakedown/regression/run-<unique>/` containing `plan.json`,
 `run.json`, `index.html`, runtime PNGs and the original discovery matrix. Zip that
 folder to share the report. It never reads or writes `tests/__screenshots__`, nor
@@ -78,7 +133,7 @@ infinite-scroll page to turn capture into an unbounded crawl.
 The paired plan preserves route kind, expected status, HTML eligibility and
 Capstan oracle metadata. Capstan/fallback plus supplementary route families remain
 the canonical source. Critical paths supplement that plan and cannot replace it.
-One bounded inspection of production's homepage header/nav/footer links can add
+In core/full runs, one bounded inspection of production's homepage header/nav/footer links can add
 reference-derived paths. There is no recursive crawl or sitemap walk. The report
 states when the navigation supplement fails, is disabled or reaches its limit.
 Absence from this sample is never proof of absence from the site.
@@ -195,3 +250,8 @@ report directory with its images, not just the HTML file.
 
 Older reports cannot recover details that were not saved. Run Shakedown again
 with the updated version to capture this evidence.
+
+Reports open on **Needs attention**, hiding passed observations from the route
+index and page cards. Choose **Passed pages** or **All observations** to inspect
+coverage. Every card carries a Passed, Failed, Review needed or Inconclusive
+badge. Summary totals always include all observations, independent of filters.

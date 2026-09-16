@@ -10,12 +10,14 @@ import { normaliseIgnore } from '../../lib/suppress.mjs';
 
 test('derived runner keeps baselines and attached artifacts intact, reports missing routes and paired evidence', async () => {
   const methods = [];
+  let referenceRequests = 0;
   const serve = candidate => createServer((req, res) => {
     methods.push(req.method);
+    if (!candidate) referenceRequests++;
     if (req.url === '/feed/') { res.writeHead(200, { 'content-type': 'application/rss+xml' }); res.end('<rss/>'); return; }
     const missing = req.url === '/probe' || (candidate && req.url === '/gone');
     res.writeHead(missing ? 404 : 200, { 'content-type': 'text/html' });
-    res.end(`<!doctype html><html lang="en"><title>${candidate ? 'Candidate' : 'Reference'}</title><main><h1>${missing ? 'Not found' : 'Welcome'}</h1><p>Content.</p>${candidate ? '<a href="">Empty destination</a><button></button>' : ''}</main><nav aria-label="Main"><a href="/gone">Other page</a></nav></html>`);
+    res.end(`<!doctype html><html lang="en"><title>${candidate ? 'Candidate' : 'Reference'}</title><main><h1>${missing ? 'Not found' : 'Welcome'}</h1><p>Content.</p>${candidate ? '<a href="">Empty destination</a><button></button><script>throw new Error("Fixture application failure")</script>' : ''}</main><nav aria-label="Main"><a href="/gone">Other page</a></nav></html>`);
   });
   const reference = serve(false), candidate = serve(true);
   await Promise.all([reference, candidate].map(server => new Promise(resolve => server.listen(0, '127.0.0.1', resolve))));
@@ -49,6 +51,52 @@ test('derived runner keeps baselines and attached artifacts intact, reports miss
     assert.equal(readFileSync(join(dir, 'tests', '__screenshots__', 'sentinel'), 'utf8'), 'baseline');
     assert.equal(readFileSync(join(dir, '.shakedown', 'matrix.json'), 'utf8'), 'attached-matrix');
     assert.equal(readFileSync(join(dir, '.shakedown', 'trial-report.html'), 'utf8'), 'attached-report');
+    const coreRun = await runRegression({ ...target, regression: { ...target.regression, level: 'core' } }, dir);
+    assert.equal(coreRun.state, 'complete');
+    assert.ok(coreRun.results[0].candidate.accessibility.findings.length);
+    assert.equal(coreRun.results[0].candidate.screenshot, undefined);
+    assert.equal(coreRun.results[0].candidate.structure, undefined);
+    assert.ok(coreRun.results[0].differences.some(d => d.key === 'emptyLinks'));
+    assert.ok(!coreRun.results[0].differences.some(d => d.key === 'title'));
+
+    const beforeErrors = referenceRequests;
+    const errorsRun = await runRegression({ ...target, regression: { ...target.regression, level: 'errors', viewports: [
+      {name:'desktop',width:800,height:600}, {name:'tablet',width:768,height:1024},
+    ] } }, dir);
+    assert.equal(errorsRun.state, 'complete');
+    assert.equal(errorsRun.exitCode, 1);
+    assert.equal(referenceRequests, beforeErrors, 'errors level must not contact production');
+    assert.equal(errorsRun.results.length, 5, 'HTML routes use selected viewports, feed is checked once');
+    assert.ok(errorsRun.results[0].health.some(message => message.includes('Fixture application failure')));
+    assert.ok(errorsRun.results.every(r => r.classification === 'candidate-checked' && !r.differences.length));
+    assert.equal(errorsRun.results[0].candidate.accessibility, undefined);
+    assert.equal(errorsRun.results[0].candidate.screenshot, undefined);
+    assert.equal(errorsRun.results[0].candidate.forms, undefined);
+    assert.match(readFileSync(join(errorsRun.dir,'index.html'),'utf8'), /Not checked in this run/);
+    const { chromium } = await import('@playwright/test');
+    const browser = await chromium.launch();
+    try {
+      const page = await browser.newPage();
+      await page.goto('file://' + join(run.dir, 'index.html'));
+      await page.locator('#review-filter').selectOption('errors');
+      assert.equal(await page.locator('article:visible').count(), 2, 'an observation can belong to several groups');
+      await page.locator('#review-filter').selectOption('accessibility');
+      assert.equal(await page.locator('article:visible').count(), 2);
+      await page.goto('file://' + join(errorsRun.dir, 'index.html'));
+      assert.equal(await page.locator('#review-filter').inputValue(), 'attention');
+      assert.equal(await page.locator('article:visible').count(), 2);
+      await page.locator('#review-filter').selectOption('passed');
+      assert.equal(await page.locator('article:visible').count(), 3);
+      await page.locator('#review-filter').selectOption('all');
+      await page.locator('#viewport-filter').selectOption('tablet');
+      assert.equal(await page.locator('article:visible').count(), 2);
+      await page.locator('#review-filter').selectOption('errors');
+      assert.equal(await page.locator('article:visible').count(), 1);
+      assert.match(await page.locator('#review-count').textContent(), /1 observation shown/);
+      await page.locator('#review-filter').selectOption('core');
+      assert.equal(await page.locator('article:visible').count(), 0);
+      assert.equal(await page.locator('#review-empty').isVisible(), true);
+    } finally { await browser.close(); }
     assert.ok(methods.every(method => method === 'GET'));
   } finally {
     process.env.PATH = originalPath;
