@@ -51,6 +51,8 @@ test('image sizing and title changes survive; limitations are rendered and count
  const dir=mkdtempSync(join(tmpdir(),'comparison-report-'));
  try {
   writeRegressionReport(dir,run);
-  assert.match(readFileSync(join(dir,'index.html'),'utf8'),/Structural comparison unavailable/);
+  const html = readFileSync(join(dir,'index.html'),'utf8');
+  assert.match(html,/Comparison limitations/);
+  assert.match(html,/rendered 284 × 213 in the reference and 284 × 540 in the candidate/);
  } finally {rmSync(dir,{recursive:true,force:true});}
 });
