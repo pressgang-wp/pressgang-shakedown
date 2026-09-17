@@ -379,11 +379,19 @@ matching across viewports and future runs; it may match longer paths. Acceptance
 does not clear health failures. Intentionally removed routes require a separate,
 explicit `ignore.routes` policy, which excludes their checks altogether.
 
-Full runs produce advisory pixel diffs for matched pages, with both dimensions and
-the percentage of the union canvas changed. Extra area counts as changed; channels
-use a tolerance of 16/255. Diffs exceeding 16 million pixels are disclosed as
-unavailable. These are observed screenshots, never baselines or correctness gates.
-Source images and raw comparison evidence remain alongside the highlighted diff.
+Full runs compare matched captures using Playwright's public `toMatchSnapshot`
+matcher (perceptual threshold 0.2; no differing pixels allowed after that threshold).
+An **Appearance changed** finding links to Playwright's HTML comparison viewer,
+including expected/reference, actual/candidate and diff evidence. A mismatch is
+advisory; it does not fail candidate health or establish that production is correct.
+The expected PNG is a disposable copy of this run's reference capture, with snapshot
+updates disabled. Consumer baselines remain untouched. Comparisons exceeding
+16 million pixels are disclosed as unavailable. The viewer is stored inside the
+run folder; share that folder intact. If the browser restricts opening its assets
+from a file URL, serve the folder through your editor's local HTTP preview.
+Capture timing and moving content can still produce differences; this comparison
+does not exercise controls or guarantee a stable carousel state. Each pair runs
+an isolated Playwright comparison worker, adding processing time to full runs.
 
 `summary.md` accompanies `index.html` and `run.json` for sharing health failures,
 behaviour changes, accepted differences, repeated changes and coverage limits.
