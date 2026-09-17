@@ -137,6 +137,7 @@ try {
     console.log(`Usage: shakedown regression [--against=production] [--candidate=local]
   --level=errors|core|full       Override regression.defaultLevel (default: full)
   --coverage=sampled|exhaustive     Include all published public content and public terms, including empty terms
+  --routes=/path/,/other/          Focus on exact discovered routes (comma-separated; encode literal commas)
   --viewports=desktop,tablet,mobile
                                 Select viewport names; comma-separated, no spaces
   --target=<name>                Select a centrally registered project
