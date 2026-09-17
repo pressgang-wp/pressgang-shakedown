@@ -361,3 +361,29 @@ does not create an empty-link difference. Image-size and layout differences are
 still compared. No carousel controls are clicked and no form is submitted; this
 cannot establish that a carousel advances correctly. A rerun is needed to collect
 new evidence; existing saved reports are unchanged.
+# Reviewing and focusing a run
+
+Use `--routes=/path/,/other-path/` to select exact discovered paths, including
+eligible public content omitted by sampling. Unknown, ignored and unsafe paths
+fail explicitly. Encode literal commas in URLs as `%2C`. The report discloses
+the focused selection; remove `--routes` to restore broader coverage.
+Reference homepage discovery may still run to resolve navigation routes.
+
+Repeated identical changes, title separator changes, uniquely matched image
+source changes and landmark role/label changes are grouped for review. Grouping
+does not suppress differences or declare improvements. Per-page evidence remains.
+
+Each comparison difference offers a JSON fragment for `regression.accept`.
+Merge it into the existing array after review. Matching is case-sensitive substring
+matching across viewports and future runs; it may match longer paths. Acceptance
+does not clear health failures. Intentionally removed routes require a separate,
+explicit `ignore.routes` policy, which excludes their checks altogether.
+
+Full runs produce advisory pixel diffs for matched pages, with both dimensions and
+the percentage of the union canvas changed. Extra area counts as changed; channels
+use a tolerance of 16/255. Diffs exceeding 16 million pixels are disclosed as
+unavailable. These are observed screenshots, never baselines or correctness gates.
+Source images and raw comparison evidence remain alongside the highlighted diff.
+
+`summary.md` accompanies `index.html` and `run.json` for sharing health failures,
+behaviour changes, accepted differences, repeated changes and coverage limits.
