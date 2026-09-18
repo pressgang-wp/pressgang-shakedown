@@ -8,7 +8,7 @@ import { getEvidence, protectContext, semanticEvidence } from '../../lib/regress
 test('anonymous transport blocks POST, actions, sockets and unsafe redirects before they reach servers', async () => {
   const seen = [];
   const server = createServer((req, res) => {
-    seen.push({ url: req.url, method: req.method, cookie: req.headers.cookie });
+    seen.push({ url: req.url, method: req.method, cookie: req.headers.cookie, connection: req.headers.connection, port: req.socket.remotePort });
     if (req.url === '/redirect') { res.writeHead(302, { location: '/wp-admin/' }); res.end(); return; }
     if (req.url === '/external') { res.writeHead(302, { location: 'http://localhost:1/' }); res.end(); return; }
     res.writeHead(200, { 'content-type': 'text/html', 'set-cookie': 'session=secret' });
@@ -44,6 +44,8 @@ test('anonymous transport blocks POST, actions, sockets and unsafe redirects bef
     assert.ok(blocked.some(s => s.startsWith('WebSocket')));
     assert.ok(seen.every(req => req.method === 'GET' && !req.cookie && !req.url.startsWith('/wp-admin') && req.url !== '/write'));
     assert.deepEqual(await context.cookies(), []);
+    assert.ok(seen.every(req => req.connection === 'close'));
+    assert.equal(new Set(seen.map(req => req.port)).size, seen.length, 'anonymous requests must not reuse sockets');
     await page.goto(url + '/redirect').catch(() => {});
     assert.ok(seen.every(req => !req.url.startsWith('/wp-admin')));
   } finally {
