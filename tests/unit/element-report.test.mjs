@@ -22,8 +22,8 @@ test('duplicate counts survive matching and unmatched replacements are not paire
   assert.deepEqual(indexes('images', [image('old')], [image('new')]), { reference: [0], candidate: [0] });
 });
 
-test('image movement remains evidence alongside source changes; link movement does not', () => {
-  assert.deepEqual(indexes('images', [image('a'), image('old')], [image('a', 20), image('new')]), { reference: [0, 1], candidate: [0, 1] });
+test('image and link movement stay outside semantic element panels', () => {
+  assert.deepEqual(indexes('images', [image('a'), image('old')], [image('a', 20), image('new')]), { reference: [1], candidate: [1] });
   assert.deepEqual(indexes('emptyLinks', [{ text: 'a', y: 0 }, { text: 'b' }], [{ text: 'b' }, { text: 'a', y: 20 }]), { reference: [], candidate: [] });
 });
 

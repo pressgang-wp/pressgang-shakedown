@@ -361,7 +361,8 @@ Reordering alone does not make equal values appear changed. Legacy captures or
 arrays that cannot be mapped retain the full group with an explanation. Selectors, HTML and highlight coordinates are stored separately
 from semantic comparison values. Movement alone does not create an empty-link
 difference. Image-size and layout differences are still compared; position-only
-image evidence remains visible even alongside source or metadata changes. No carousel
+image movement is described as layout evidence, outside the image-content panel.
+Full positions remain in raw JSON and screenshot comparisons. No carousel
 controls are clicked and no form is submitted; this cannot establish that a
 carousel advances correctly. A rerun is needed to collect new evidence; existing
 saved reports are unchanged.
