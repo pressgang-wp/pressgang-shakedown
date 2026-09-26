@@ -354,13 +354,14 @@ Candidate image-health findings retain evidence at every level. HTML excerpts
 are capped at 6,000 characters with an explicit truncation notice. Capture failures
 and elements with no visible box retain an explanation instead of a guessed highlight.
 
-The reference and candidate sections show the captured elements in a changed
-group; not every listed element necessarily changed. Selectors, HTML and highlight
-coordinates are stored separately from semantic comparison values. Movement alone
-does not create an empty-link difference. Image-size and layout differences are
-still compared. No carousel controls are clicked and no form is submitted; this
-cannot establish that a carousel advances correctly. A rerun is needed to collect
-new evidence; existing saved reports are unchanged.
+The reference and candidate sections show only the elements whose comparison
+values changed. Selectors, HTML and highlight coordinates are stored separately
+from semantic comparison values. Movement alone does not create an empty-link
+difference. Image-size and layout differences are still compared; position-only
+image evidence is shown when no semantic image metadata changed. No carousel
+controls are clicked and no form is submitted; this cannot establish that a
+carousel advances correctly. A rerun is needed to collect new evidence; existing
+saved reports are unchanged.
 # Reviewing and focusing a run
 
 Use `--routes=/path/,/other-path/` to select exact discovered paths, including
