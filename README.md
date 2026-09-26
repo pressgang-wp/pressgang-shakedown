@@ -254,6 +254,9 @@ the **observer** mu-plugin (PHP notice capture and render telemetry), the
 
 Still ahead:
 
+- **Regression testing improvements** — optional Firefox/WebKit coverage,
+  failure traces and evaluation of ARIA snapshots. See the
+  [testing roadmap](docs/ROADMAP.md) for priorities and optional integrations.
 - **Render telemetry** — which Twig templates and snippets a run actually
   exercised, so coverage is measurable rather than assumed
 - More engines: self-booting **WordPress Playground**, per-PR **InstaWP** CI
