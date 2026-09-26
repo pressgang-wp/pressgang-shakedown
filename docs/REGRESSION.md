@@ -385,8 +385,13 @@ explicit `ignore.routes` policy, which excludes their checks altogether.
 
 Full runs compare matched captures using Playwright's public `toMatchSnapshot`
 matcher (perceptual threshold 0.2; no differing pixels allowed after that threshold).
-An **Appearance changed** finding links to Playwright's HTML comparison viewer,
-including expected/reference, actual/candidate and diff evidence. A mismatch is
+An **Appearance changed — review required** panel shows reference/candidate images,
+a diff and a comparison slider directly in Shakedown. Dimensions and height changes
+are explained without presenting the mismatch as an application error. The slider
+uses a shared scale without stretching images of different sizes.
+Playwright's assertion report is available only under **Technical details**, with
+an explanation of its failed-assertion and Buffer wording. Genuine capture or
+comparison failures instead show **Comparison unavailable** and their reason. A mismatch is
 advisory; it does not fail candidate health or establish that production is correct.
 The expected PNG is a disposable copy of this run's reference capture, with snapshot
 updates disabled. Consumer baselines remain untouched. Comparisons exceeding
