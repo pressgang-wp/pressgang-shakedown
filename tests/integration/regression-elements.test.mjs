@@ -51,3 +51,26 @@ test('missing sources, distortion and overflow have actionable evidence without 
     assert.ok(broken.blocking && broken.nodes[0].html.includes('stretched'));
   } finally { await browser.close(); rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('viewport-width capture preserves layout and distinguishes clipped content from scrollable overflow', async () => {
+  const browser = await chromium.launch();
+  const dir = mkdtempSync(join(tmpdir(), 'shakedown-viewport-'));
+  try {
+    const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
+    await page.setContent(`<style>body{margin:0}.carousel{width:300px;overflow:hidden}.slide{width:1800px;height:100px}.hidden{position:absolute;left:-9999px}.spacer{height:1200px}</style>
+      <span class="hidden">Hidden label</span><div class="carousel"><div class="slide">Slide</div></div><div class="spacer"></div>`);
+    assert.ok(!(await collectElements(page)).issues.some(f => f.id === 'horizontal-overflow'));
+    await page.evaluate(() => { const el = document.createElement('div'); el.id = 'overflow'; el.style.cssText = 'width:1000px;height:20px'; document.body.append(el); });
+    const issue = (await collectElements(page)).issues.find(f => f.id === 'horizontal-overflow');
+    assert.ok(issue);
+    assert.ok(!issue.nodes.some(n => n.html.includes('class="slide"') || n.html.includes('class="hidden"')));
+    const { capturePageScreenshot } = await import('../../lib/accessibility-evidence.mjs');
+    const png = await capturePageScreenshot(page, { path: join(dir, 'page.png') });
+    assert.equal(png.readUInt32BE(16), 800);
+    assert.equal(png.readUInt32BE(20), 1320);
+    assert.equal(await page.locator('#overflow').evaluate(el => el.getBoundingClientRect().width), 1000);
+    assert.equal(await page.evaluate(() => scrollX), 0);
+    await page.evaluate(() => document.documentElement.style.overflowX = 'hidden');
+    assert.ok(!(await collectElements(page)).issues.some(f => f.id === 'horizontal-overflow'));
+  } finally { await browser.close(); rmSync(dir, { recursive: true, force: true }); }
+});

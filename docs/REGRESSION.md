@@ -395,3 +395,17 @@ an isolated Playwright comparison worker, adding processing time to full runs.
 
 `summary.md` accompanies `index.html` and `run.json` for sharing health failures,
 behaviour changes, accepted differences, repeated changes and coverage limits.
+
+### Screenshot width and off-screen content
+
+Regression screenshots retain the selected viewport width while capturing the
+full document height. Capture does not inject overflow styles or remove hidden
+elements. Content beyond the horizontal viewport remains outside the comparison.
+
+Horizontal scrolling is assessed separately: the collector measures the available
+scroll range and restores the original position. Root `overflow: hidden` or
+`clip` does not count as user-scrollable overflow. Suggested contributors are
+filtered through ancestor overflow clipping; off-screen coordinates alone are
+not a defect. Contributors remain suggestions, not proven causes or intent.
+The raw result retains viewport/document widths, measured scroll range and root
+overflow behaviour in `overflow`, plus the existing element location evidence.
