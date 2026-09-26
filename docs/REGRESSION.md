@@ -354,11 +354,14 @@ Candidate image-health findings retain evidence at every level. HTML excerpts
 are capped at 6,000 characters with an explicit truncation notice. Capture failures
 and elements with no visible box retain an explanation instead of a guessed highlight.
 
-The reference and candidate sections show only the elements whose comparison
-values changed. Selectors, HTML and highlight coordinates are stored separately
+The reference and candidate sections omit equal comparison values using duplicate-aware
+matching rather than array positions. Remaining elements are labelled changed or
+unmatched: they may be changed, added or removed, without an assumed pairing.
+Reordering alone does not make equal values appear changed. Legacy captures or
+arrays that cannot be mapped retain the full group with an explanation. Selectors, HTML and highlight coordinates are stored separately
 from semantic comparison values. Movement alone does not create an empty-link
 difference. Image-size and layout differences are still compared; position-only
-image evidence is shown when no semantic image metadata changed. No carousel
+image evidence remains visible even alongside source or metadata changes. No carousel
 controls are clicked and no form is submitted; this cannot establish that a
 carousel advances correctly. A rerun is needed to collect new evidence; existing
 saved reports are unchanged.

@@ -39,11 +39,11 @@ test('comparison evidence only renders elements whose values changed', () => {
   };
 
   const html = renderElements(result);
-  assert.match(html, /images · 1 changed element\(s\)/);
+  assert.match(html, /images · 2 changed or unmatched element\(s\)/);
   assert.match(html, /changed-reference/);
   assert.match(html, /changed-candidate/);
-  assert.doesNotMatch(html, /same-reference/);
-  assert.doesNotMatch(html, /same-candidate/);
+  assert.match(html, /same-reference/);
+  assert.match(html, /same-candidate/);
   assert.match(html, /changed-link-reference/);
   assert.match(html, /changed-link-candidate/);
   assert.doesNotMatch(html, /moved-link-reference/);
