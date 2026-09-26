@@ -24,7 +24,7 @@ test('grouping recognises punctuation without merging different titles or accept
   const run={results:[result('/a','A - Site','A – Site'),result('/b','B - Site','B – Site'),result('/c','C','D'),result('/d','D - Site','D – Site',true)]};
   assert.equal(groupedChanges(run).length,1);
   assert.equal(groupedChanges(run)[0].members.length,2);
-  assert.match(acceptanceHelp({signature:'forms on /x/'}), /substring/);
+  assert.match(acceptanceHelp({signature:'forms on /x/'}), /acceptance-policy/);
   assert.equal(acceptanceHelp({signature:'forms on /x/',suppressed:true}), '');
   const md=markdownReport(run,{routes:4,healthFailures:0,differences:4,limitations:0},{mode:'sampled',state:'unavailable',selectedRoutes:4,notVisited:[]});
   assert.match(md,/unknown discovered routes omitted/);

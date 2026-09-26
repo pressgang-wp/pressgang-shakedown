@@ -40,8 +40,8 @@ test('structural differences require one known main region on both sides', () =>
 });
 
 test('image sizing and title changes survive; limitations are rendered and counted separately', () => {
- const reference={structure:[],landmarks:[],title:'Before',images:[{width:284,height:213}]};
- const candidate={structure:[{tag:'h2'}],landmarks:[{tag:'main'}],title:'After',images:[{width:284,height:540}]};
+ const reference={structure:[],landmarks:[],title:'Before',images:[{src:'/photo.png',width:284,height:213}]};
+ const candidate={structure:[{tag:'h2'}],landmarks:[{tag:'main'}],title:'After',images:[{src:'/photo.png',width:284,height:540}]};
  const differences=compareEvidence(reference,candidate,'/');
  assert.ok(differences.some(d=>d.key==='images'));
  assert.ok(differences.some(d=>d.key==='title'));

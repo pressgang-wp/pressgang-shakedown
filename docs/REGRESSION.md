@@ -428,3 +428,15 @@ object to make this a project preference; `--accessibility=on` overrides it.
 The default remains on for core/full. The errors level always omits accessibility.
 This option applies only to regression mode, not the attached or sandbox passes.
 A passing run covers only the selected checks, not a guarantee of deployment safety.
+
+
+### Compact reviewer evidence
+
+Identical repeated image-distortion advisories are grouped with one representative
+and route/observation counts. Grouping does not change verdicts or suppress raw
+findings. Element views show a close-up and original-screenshot link rather than
+repeating a full-page overlay. Technical arrays show unmatched values, not guessed
+pairs; full arrays and the omitted-content inventory remain in `run.json`.
+Acceptance scope is explained once globally. Empty transport/advisory panels and
+successful capture bookkeeping are omitted; capture limitations remain visible.
+Routes without health failures use a compact status instead of a repeated section.
