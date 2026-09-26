@@ -10,6 +10,46 @@ import { semanticEvidence } from '../../lib/regression-browser.mjs';
 import { compareEvidence } from '../../lib/regression-plan.mjs';
 import { renderElements } from '../../lib/element-report.mjs';
 
+test('comparison evidence only renders elements whose values changed', () => {
+  const node = html => ({ target: [html], html });
+  const result = {
+    differences: [{
+      key: 'images',
+      reference: [
+        { src: '/same.webp', alt: 'Same', width: 70, height: 70, x: 1, y: 1 },
+        { src: '/before.webp', alt: 'Changed', width: 70, height: 70, x: 1, y: 2 },
+      ],
+      candidate: [
+        { src: '/same.webp', alt: 'Same', width: 70, height: 70, x: 1, y: 3 },
+        { src: '/after.webp', alt: 'Changed', width: 70, height: 70, x: 1, y: 4 },
+      ],
+    }, {
+      key: 'emptyLinks',
+      reference: [{ text: 'Moved', x: 1, y: 1 }, { text: 'Before', x: 1, y: 2 }],
+      candidate: [{ text: 'Moved', x: 1, y: 3 }, { text: 'After', x: 1, y: 4 }],
+    }],
+    reference: { elements: { findings: [
+      { id: 'images', nodes: [node('same-reference'), node('changed-reference')] },
+      { id: 'emptyLinks', nodes: [node('moved-link-reference'), node('changed-link-reference')] },
+    ] } },
+    candidate: { elements: { findings: [
+      { id: 'images', nodes: [node('same-candidate'), node('changed-candidate')] },
+      { id: 'emptyLinks', nodes: [node('moved-link-candidate'), node('changed-link-candidate')] },
+    ] } },
+  };
+
+  const html = renderElements(result);
+  assert.match(html, /images · 1 changed element\(s\)/);
+  assert.match(html, /changed-reference/);
+  assert.match(html, /changed-candidate/);
+  assert.doesNotMatch(html, /same-reference/);
+  assert.doesNotMatch(html, /same-candidate/);
+  assert.match(html, /changed-link-reference/);
+  assert.match(html, /changed-link-candidate/);
+  assert.doesNotMatch(html, /moved-link-reference/);
+  assert.doesNotMatch(html, /moved-link-candidate/);
+});
+
 test('missing sources, distortion and overflow have actionable evidence without treating cropping or clipped carousels as failures', async () => {
   const browser = await chromium.launch();
   const dir = mkdtempSync(join(tmpdir(), 'shakedown-elements-'));
