@@ -409,3 +409,18 @@ filtered through ancestor overflow clipping; off-screen coordinates alone are
 not a defect. Contributors remain suggestions, not proven causes or intent.
 The raw result retains viewport/document widths, measured scroll range and root
 overflow behaviour in `overflow`, plus the existing element location evidence.
+
+### Optional accessibility audit
+
+Accessibility findings describe candidate health; they are not a comparison with
+reference accessibility and do not establish that a release introduced a defect.
+The axe serious/critical classification describes accessibility impact, not the
+severity of a deployment regression.
+
+Use `npx shakedown regression --level=full --accessibility=off` to retain all visual
+and structural comparisons without running axe. The report discloses that the
+audit was skipped. Save `"accessibility": "off"` inside the `regression` config
+object to make this a project preference; `--accessibility=on` overrides it.
+The default remains on for core/full. The errors level always omits accessibility.
+This option applies only to regression mode, not the attached or sandbox passes.
+A passing run covers only the selected checks, not a guarantee of deployment safety.

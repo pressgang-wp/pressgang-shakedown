@@ -135,6 +135,7 @@ try {
 
   if (command === 'regression' && args.length === 2 && args[1] === '--help') {
     console.log(`Usage: shakedown regression [--against=production] [--candidate=local]
+  --accessibility=on|off       Enable/disable the regression accessibility audit
   --level=errors|core|full       Override regression.defaultLevel (default: full)
   --coverage=sampled|exhaustive     Include all published public content and public terms, including empty terms
   --routes=/path/,/other/          Focus on exact discovered routes (comma-separated; encode literal commas)

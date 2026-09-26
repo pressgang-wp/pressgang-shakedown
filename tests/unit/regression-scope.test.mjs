@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { regressionOptions, compareEvidence } from '../../lib/regression-plan.mjs';
-import { parseRegressionFlags, reviewGroups, observationVerdict } from '../../lib/regression-scope.mjs';
+import { runScope, parseRegressionFlags, reviewGroups, observationVerdict } from '../../lib/regression-scope.mjs';
 const config = { references: { production: 'https://prod.test' }, candidates: { local: 'https://local.test' } };
 const options = (raw = {}, flags = {}) => regressionOptions({ ...config, ...raw }, 'https://local.test', flags);
 
@@ -44,4 +44,20 @@ test('page verdict never treats incomplete or advisory evidence as a clean pass'
   assert.equal(observationVerdict({...clean,differences:[{key:'title',suppressed:false}]}).kind,'review');
   assert.equal(observationVerdict({...clean,candidate:{advisory:['capture limit reached']}}).kind,'review');
   assert.equal(observationVerdict({...clean,differences:[{key:'title',suppressed:true}]}).kind,'passed');
+});
+
+
+test('accessibility opt-out keeps full comparisons and discloses skipped audit', () => {
+  const flags = parseRegressionFlags(['--level=full', '--accessibility=off']);
+  const scope = runScope(options({}, flags));
+  assert.equal(scope.accessibility, false);
+  assert.equal(scope.screenshots, true);
+  assert.equal(scope.comparison, true);
+  assert.ok(scope.skipped.includes('Accessibility audit (disabled explicitly)'));
+  assert.equal(runScope(options()).accessibility, true);
+  assert.equal(runScope(options({ accessibility: 'off' })).accessibility, false);
+  assert.equal(runScope(options({ accessibility: 'off' }, { accessibility: 'on' })).accessibility, true);
+  assert.equal(runScope(options({}, { level: 'errors', accessibility: 'on' })).accessibility, false);
+  assert.throws(() => options({ accessibility: false }));
+  assert.throws(() => options({}, { accessibility: 'no' }));
 });
