@@ -237,8 +237,7 @@ Each element includes its selector, escaped HTML, axe's explanation and check
 data. Contrast checks include measured and required ratios and foreground and
 background colours when axe provides them.
 
-The close-up outlines the element on a saved screenshot. Expand **Show location
-on full page** for context, or **Open original screenshot** for the unaltered
+The close-up outlines the element on a saved screenshot. Use **Open original screenshot** for the unaltered
 image. Highlights are report overlays; they do not modify the tested page or
 visual baselines. Missing, hidden or ambiguous elements retain their details with
 an explicit explanation when a highlight cannot be captured.
