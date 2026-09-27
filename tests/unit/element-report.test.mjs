@@ -35,3 +35,22 @@ test('legacy and mismatched evidence arrays retain captures with an honest expla
     assert.match(html, /inclusion does not establish/);
   }
 });
+
+test('unique-source alt changes are paired without screenshots; geometric changes keep them', () => {
+  const before = { src: '/logo.webp', alt: 'Old', width: 100, height: 50, x: 0, y: 0 };
+  const node = { target: ['img'], html: '<img>', highlight: { box: { x: 0, y: 0, width: 100, height: 50 } } };
+  const side = { elements: { screenshot: 'page.png', width: 800, height: 600, findings: [{ id: 'images', nodes: [node] }] } };
+  const render = after => renderElements({ differences: [{ key: 'images', reference: [before], candidate: [after] }], reference: side, candidate: side });
+  const html = render({ ...before, alt: '<New>' });
+  assert.match(html, /Image alternative text changed/);
+  assert.match(html, /- Old\n\+ &lt;New&gt;/);
+  assert.doesNotMatch(html, /<svg|changed or unmatched/);
+  assert.match(render({ ...before, alt: 'New', y: 10 }), /<svg/);
+  assert.match(render({ ...before, alt: 'New', width: 120 }), /<svg/);
+  assert.match(render({ ...before, src: '/different.webp' }), /<svg/);
+});
+
+test('repeated sources remain unmatched rather than guessing an alt correspondence', async () => {
+  const { pairedImages } = await import('../../lib/element-report.mjs');
+  assert.deepEqual(pairedImages({ key: 'images', reference: [{ src: 'a', alt: 'one' }, { src: 'a', alt: 'two' }], candidate: [{ src: 'a', alt: 'three' }] }), []);
+});

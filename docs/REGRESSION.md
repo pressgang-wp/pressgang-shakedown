@@ -445,3 +445,11 @@ pairs; full arrays and the omitted-content inventory remain in `run.json`.
 Acceptance scope is explained once globally. Empty transport/advisory panels and
 successful capture bookkeeping are omitted; capture limitations remain visible.
 Routes without health failures use a compact status instead of a repeated section.
+
+
+Images with a unique identical normalized source on each side are paired for
+attribute review. Alternative text changes show explicit before/after values.
+A strictly alt-only change omits outlined screenshots; changes that also affect
+size, rendering metadata or position retain screenshot evidence. Repeated sources
+remain unmatched rather than guessing which occurrence corresponds. Source
+changes retain their existing visual evidence. Raw captures are unchanged.
