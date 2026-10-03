@@ -3,7 +3,7 @@ import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { deriveMatrix } from '../../lib/derive.mjs';
+import { capstanDoctor, deriveMatrix } from '../../lib/derive.mjs';
 import { normaliseIgnore } from '../../lib/suppress.mjs';
 
 /**
@@ -12,7 +12,7 @@ import { normaliseIgnore } from '../../lib/suppress.mjs';
  * install. The stub distinguishes the two invocations the way the real thing
  * does — by which script it was handed.
  */
-function withFakeWp({ base, supplement = [], excluded = [], warnings = [] }, run) {
+function withFakeWp({ base, supplement = [], excluded = [], warnings = [], capstan = true, supplementError = false }, run) {
   const root = mkdtempSync(join(tmpdir(), 'shakedown-derive-test-'));
   const bin = join(root, 'bin');
   const oldPath = process.env.PATH;
@@ -20,8 +20,15 @@ function withFakeWp({ base, supplement = [], excluded = [], warnings = [] }, run
   mkdirSync(bin, { recursive: true });
   writeFileSync(join(bin, 'wp'), `#!/bin/sh
 case "$*" in
+  *'capstan matrix'*)
+    ${capstan ? "cat <<'CAPSTAN'\n" + JSON.stringify({ routes: base }) + '\nCAPSTAN' : 'exit 1'}
+  ;;
+  *'capstan doctor'*)
+    printf '%s\n' '{"checks":[],"failures":1,"warnings":0}'
+    exit 1
+  ;;
   *matrix-supplement.php*) cat <<'SUPP'
-${JSON.stringify({ routes: supplement, excluded, warnings })}
+${supplementError ? 'not JSON' : JSON.stringify({ routes: supplement, excluded, warnings })}
 SUPP
   ;;
   *) cat <<'BASE'
@@ -131,5 +138,32 @@ test('discovery disclosures survive supplement merging', () => {
     const {matrix} = deriveMatrix(target({}),workspace);
     assert.deepEqual(matrix.discoveryExcluded,excluded);
     assert.deepEqual(matrix.discoveryWarnings,['Stored rules differ']);
+  });
+});
+
+test('bundled fallback keeps supplementary coverage and source labels when Capstan is unavailable', () => {
+  withFakeWp({ base: ROUTES, supplement: SUPPLEMENT, capstan: false }, workspace => {
+    const result = deriveMatrix(target({}), workspace);
+    assert.equal(result.source, 'bundled matrix.php');
+    assert.equal(result.supplemented, 2);
+    assert.equal(result.matrix.routes.find(route => route.kind === 'home').derivation, 'bundled matrix.php');
+    assert.equal(result.matrix.routes.find(route => route.kind === 'feed').derivation, 'bundled matrix-supplement.php');
+    assert.equal(result.matrix.routes.find(route => route.url.endsWith('/about/')).kind, 'template:about.php');
+  });
+});
+
+test('failed supplementary discovery retains base routes and discloses the missing coverage', () => {
+  withFakeWp({ base: ROUTES, supplementError: true }, workspace => {
+    const result = deriveMatrix(target({}), workspace);
+    assert.deepEqual(result.matrix.routes.map(route => route.url), ROUTES.map(route => route.url));
+    assert.equal(result.supplemented, 0);
+    assert.deepEqual(result.matrix.discoveryWarnings, ['Supplementary route discovery unavailable: Supplement produced no route array']);
+    assert.deepEqual(result.matrix.discoveryExcluded, []);
+  });
+});
+
+test('Capstan diagnostics retain a failing report returned with a nonzero exit status', () => {
+  withFakeWp({ base: ROUTES }, workspace => {
+    assert.deepEqual(capstanDoctor(workspace), { checks: [], failures: 1, warnings: 0 });
   });
 });

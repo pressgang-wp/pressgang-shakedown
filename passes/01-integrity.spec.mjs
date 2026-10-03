@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { browsableRoutes, loadMatrix } from './matrix.mjs';
+import { browsableRoutes } from '../lib/matrix.mjs';
+import { loadMatrix } from '../lib/matrix-store.mjs';
 import { watchIntegrity, brokenImages } from '../lib/health.mjs';
 
 const matrix = loadMatrix();

@@ -1,7 +1,8 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, expect } from '@playwright/test';
-import { browsableRoutes, loadMatrix } from './matrix.mjs';
+import { browsableRoutes } from '../lib/matrix.mjs';
+import { loadMatrix } from '../lib/matrix-store.mjs';
 
 /**
  * Pass 03 — visual regression.

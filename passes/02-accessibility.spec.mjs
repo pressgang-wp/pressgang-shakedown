@@ -1,6 +1,7 @@
 import { captureAccessibilityEvidence } from '../lib/accessibility-evidence.mjs';
 import { test, expect } from '@playwright/test';
-import { browsableRoutes, loadMatrix } from './matrix.mjs';
+import { browsableRoutes } from '../lib/matrix.mjs';
+import { loadMatrix } from '../lib/matrix-store.mjs';
 import { accessibilityFindings } from '../lib/health.mjs';
 
 const matrix = loadMatrix();

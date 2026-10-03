@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loadMatrix } from './matrix.mjs';
+import { loadMatrix } from '../lib/matrix-store.mjs';
 import { availabilityFindings } from '../lib/health.mjs';
 
 const matrix = loadMatrix();
