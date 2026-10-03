@@ -79,7 +79,10 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
 - **Target** (`lib/target.mjs`)
   Resolves the site path, base URL, and `shakedown.config.json` for a run —
   including central mode, where one clone drives any registered `--target`.
-- **Matrix** (`lib/derive.mjs`, `passes/matrix.mjs`)
+  `lib/config.mjs` selects the project configuration; `lib/wordpress-target.mjs`
+  resolves the WordPress installation and home URL. `target.mjs` composes these
+  with mode options and suppression validation.
+- **Matrix** (`lib/derive.mjs`, `lib/matrix.mjs`)
   Every route the site serves: front page, each public post type's archive and
   sample singles, taxonomy term pages, pages per registered template, internal
   menu targets, a search probe, and a 404 probe. From `wp capstan matrix
@@ -92,6 +95,12 @@ WordPress (`bin/*.php`, `php/observer.php`), invoked via `wp eval-file`.
   routes win a URL collision (their labels are more specific), `ignore.routes`
   applies after the merge, and a route marked `html: false` (feeds) is checked by
   pass 00 but skipped by the browser passes via `browsableRoutes()`.
+  `lib/wordpress-discovery.mjs` owns WP-CLI discovery, inventory and Capstan
+  diagnostics. `lib/matrix.mjs` owns the shared route model and pure merge/filter
+  operations; `lib/matrix-store.mjs` owns JSON persistence. `derive.mjs` composes
+  them, and `passes/matrix.mjs` retains compatibility exports. Shared libraries
+  must not import from `passes/`. Late seeded-route merges retain state-label
+  precedence and reapply `ignore.routes`, so fixtures cannot restore excluded URLs.
 - **Sandbox** (`lib/sandbox.mjs`)
   A throwaway WordPress in a temp dir: core/theme/plugins symlinked **read-only**,
   its own SQLite database and uploads, WordPress install defaults cleared, then
@@ -209,8 +218,18 @@ PHP evidence.
 - `lib/sandbox.mjs` — sandbox assembly, isolation witness, seeding layers
 - `lib/derive.mjs` — matrix derivation, Capstan oracle/doctor, route merge
 - `lib/target.mjs` — target/config resolution
+- `lib/config.mjs`, `lib/wordpress-target.mjs` — project selection and platform resolution
+- `lib/matrix.mjs`, `lib/matrix-store.mjs` — shared route model, pure operations and persistence
+- `lib/wordpress-discovery.mjs` — WP-CLI discovery, content inventory and diagnostics
 - `lib/regression*.mjs` — paired plan, anonymous transport, runtime evidence and
   separate Regression Report; `docs/REGRESSION.md` defines the contract
+- `lib/regression-prepare.mjs` — populate the plan and discovery evidence inside
+  the run's report lifecycle; retain partial evidence when preparation fails
+- `lib/regression-runner.mjs`, `lib/regression-capture.mjs` — session lifecycle,
+  execution of the prepared plan and individual page captures. Execution does
+  not invoke local discovery. The session awaits preparation, derives scope from
+  the plan, persists it and discloses its policies. Reference navigation is runtime
+  evidence; focused route selection must still follow that supplement.
 - `lib/health.mjs` — checks shared by passes 00–02 and regression (keep parity)
 - `tests/integration/` — adversarial local-browser transport checks; run with
   `npm run test:regression` after installing Chromium (never published)
