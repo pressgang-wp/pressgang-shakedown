@@ -31,7 +31,7 @@ test('axe retains element reasons and contrast, with aligned screenshot location
     const suppressed = await accessibilityFindings(page, { a11yRules: ['color-contrast'] });
     assert.ok(!suppressed.some(f => f.id === 'color-contrast'));
     const html = '<style>' + accessibilityStyles + '</style>' + renderAccessibilityEvidence(evidence);
-    assert.match(html, /Show location on full page/);
+    assert.match(html, /Outlined element in the captured page/);
     assert.match(html, /&lt;button/);
     assert.ok(!html.includes('<button'));
     writeFileSync(join(dir, 'index.html'), html);
@@ -39,6 +39,7 @@ test('axe retains element reasons and contrast, with aligned screenshot location
     await page.locator('details').evaluateAll(nodes => nodes.forEach(n => n.open = true));
     assert.ok(await page.locator('svg rect').count() > 0);
     assert.equal(await page.locator('svg image').first().getAttribute('href'), 'page.png');
+    assert.equal(await page.getByRole('link', { name: 'Open original screenshot' }).first().getAttribute('href'), 'page.png');
     assert.ok(readFileSync(join(dir, 'page.png')).length > 1000);
   } finally { await browser.close(); rmSync(dir, { recursive: true, force: true }); }
 });
